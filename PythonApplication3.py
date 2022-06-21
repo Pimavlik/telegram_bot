@@ -1,6 +1,6 @@
 import netmiko
 from netmiko import ConnectHandler
-import getpass # импорт библиотеки getpass 636638657
+import getpass
 import telebot
 from collections import Counter
 import sqlite3
@@ -13,7 +13,7 @@ import subprocess
 
 
 
-token = '5249668573:AAFAkngh4FTAQQ7yJKYz3N7JwV9d2EuJ6SE'
+token = 'ваш токен бота'
 bot = telebot.TeleBot(token)
 keyboard_menu = telebot.types.ReplyKeyboardMarkup(True, one_time_keyboard=True)
 keyboard_menu.row('Мои устройства', 'Добавить новое устройство')
