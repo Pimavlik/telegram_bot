@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+  id="Definitions_Store_Shopping"
+  targetNamespace="http://example.com/bpmn/lenta-shopping">
+
+  <!-- Collaboration with distinct participants (Customer, Store, Bank Acquirer) -->
+  <bpmn:collaboration id="Collaboration_Lenta_Shopping" name="Lenta Shopping Collaboration">
+    <bpmn:participant id="Participant_Customer" name="Покупатель" processRef="Process_Customer" />
+    <bpmn:participant id="Participant_Store" name="Магазин (Кассир + ИС)" processRef="Process_Store" />
+    <bpmn:participant id="Participant_Bank" name="Банк-эквайер" processRef="Process_Bank" />
+
+    <!-- Message Flows between independent participants -->
+    <bpmn:messageFlow id="MF_ItemsReady" name="Товары на ленте" sourceRef="Task_PlaceItemsOnBelt" targetRef="Task_StartService" />
+    <bpmn:messageFlow id="MF_TotalAnnounced" name="Озвучена сумма" sourceRef="Task_AnnounceTotalAndAskPayment" targetRef="Task_DecidePaymentMethod" />
+    <bpmn:messageFlow id="MF_RequestPrintReceipt" name="Печать чека?" sourceRef="Gateway_PrintReceiptDecision" targetRef="Task_PrintReceipt" />
+    <bpmn:messageFlow id="MF_ReceiptToCustomer" name="Чек" sourceRef="Task_HandOverReceipt" targetRef="Task_ReceiveReceipt" />
+
+    <!-- Store IS <-> Bank payment exchange -->
+    <bpmn:messageFlow id="MF_PaymentRequest" name="Запрос оплаты" sourceRef="Task_FormPaymentRequest" targetRef="Task_AuthorizePayment" />
+    <bpmn:messageFlow id="MF_PaymentResult" name="Подтверждение оплаты" sourceRef="Task_SendAuthorizationResult" targetRef="Task_RecordPaymentResult" />
+  </bpmn:collaboration>
+
+  <!-- Customer Process -->
+  <bpmn:process id="Process_Customer" name="Процесс покупателя" isExecutable="false">
+    <bpmn:startEvent id="Start_CustomerNeed" name="Закончились продукты">
+      <bpmn:outgoing>SF_C1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="Task_GoToStore" name="Отправиться в магазин">
+      <bpmn:incoming>SF_C1</bpmn:incoming>
+      <bpmn:outgoing>SF_C2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_TakeBasket" name="Взять корзинку">
+      <bpmn:incoming>SF_C2</bpmn:incoming>
+      <bpmn:outgoing>SF_C3</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_PickGoods" name="Подобрать товары">
+      <bpmn:incoming>SF_C3</bpmn:incoming>
+      <bpmn:outgoing>SF_C4</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_QueueAtCashdesk" name="Очередь к кассе">
+      <bpmn:incoming>SF_C4</bpmn:incoming>
+      <bpmn:outgoing>SF_C5</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_PlaceItemsOnBelt" name="Выложить товары на ленту">
+      <bpmn:incoming>SF_C5</bpmn:incoming>
+      <bpmn:outgoing>SF_C6</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:userTask id="Task_DecidePaymentMethod" name="Выбрать способ оплаты">
+      <bpmn:incoming>SF_C6</bpmn:incoming>
+      <bpmn:outgoing>SF_C7</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_PrintReceiptDecision" name="Печатать чек?" default="SF_C_NoPrint">
+      <bpmn:incoming>SF_C12</bpmn:incoming>
+      <bpmn:outgoing>SF_C_PrintYes</bpmn:outgoing>
+      <bpmn:outgoing>SF_C_NoPrint</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="Task_ReceiveReceipt" name="Получить чек">
+      <bpmn:incoming>SF_C_PrintYes</bpmn:incoming>
+      <bpmn:outgoing>SF_C13</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_TakeGoodsAndChange" name="Забрать товары и сдачу">
+      <bpmn:incoming>SF_C_NoPrint</bpmn:incoming>
+      <bpmn:incoming>SF_C13</bpmn:incoming>
+      <bpmn:outgoing>SF_C14</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="End_CustomerHome" name="Идти домой">
+      <bpmn:incoming>SF_C14</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- Customer sequence flows -->
+    <bpmn:sequenceFlow id="SF_C1" sourceRef="Start_CustomerNeed" targetRef="Task_GoToStore" />
+    <bpmn:sequenceFlow id="SF_C2" sourceRef="Task_GoToStore" targetRef="Task_TakeBasket" />
+    <bpmn:sequenceFlow id="SF_C3" sourceRef="Task_TakeBasket" targetRef="Task_PickGoods" />
+    <bpmn:sequenceFlow id="SF_C4" sourceRef="Task_PickGoods" targetRef="Task_QueueAtCashdesk" />
+    <bpmn:sequenceFlow id="SF_C5" sourceRef="Task_QueueAtCashdesk" targetRef="Task_PlaceItemsOnBelt" />
+    <bpmn:sequenceFlow id="SF_C6" sourceRef="Task_PlaceItemsOnBelt" targetRef="Task_DecidePaymentMethod" />
+    <!-- From cashier after total announced -->
+    <bpmn:sequenceFlow id="SF_C7" sourceRef="Task_DecidePaymentMethod" targetRef="Task_DecidePaymentMethod" />
+    <!-- This self-loop represents possible mixed payment iterations; control handled by Store -->
+    <bpmn:sequenceFlow id="SF_C12" sourceRef="Task_DecidePaymentMethod" targetRef="Gateway_PrintReceiptDecision" />
+    <bpmn:sequenceFlow id="SF_C_PrintYes" name="Да" sourceRef="Gateway_PrintReceiptDecision" targetRef="Task_ReceiveReceipt" />
+    <bpmn:sequenceFlow id="SF_C_NoPrint" name="Нет" sourceRef="Gateway_PrintReceiptDecision" targetRef="Task_TakeGoodsAndChange" />
+    <bpmn:sequenceFlow id="SF_C13" sourceRef="Task_ReceiveReceipt" targetRef="Task_TakeGoodsAndChange" />
+    <bpmn:sequenceFlow id="SF_C14" sourceRef="Task_TakeGoodsAndChange" targetRef="End_CustomerHome" />
+  </bpmn:process>
+
+  <!-- Store Process (Cashier + Store IS) -->
+  <bpmn:process id="Process_Store" name="Процесс магазина" isExecutable="true">
+    <bpmn:startEvent id="Start_FreeDesk" name="Свободная касса">
+      <bpmn:outgoing>SF_S1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="Task_StartService" name="Начать обслуживание клиента">
+      <bpmn:incoming>SF_S1</bpmn:incoming>
+      <bpmn:outgoing>SF_S2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_CreateSaleED" name="Создать ЭД 'продажа' в ИС">
+      <bpmn:incoming>SF_S2</bpmn:incoming>
+      <bpmn:outgoing>SF_S3</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="Gateway_CreateSaleOK" name="Ошибка при создании?" default="SF_S3_ok">
+      <bpmn:incoming>SF_S3</bpmn:incoming>
+      <bpmn:outgoing>SF_S3_fail</bpmn:outgoing>
+      <bpmn:outgoing>SF_S3_ok</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="End_Abort" name="Прервать обслуживание">
+      <bpmn:incoming>SF_S3_fail</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- Transactional scanning loop -->
+    <bpmn:transaction id="Trans_ScanItems" name="Пробитие товаров (транзакционно)" completionQuantity="1">
+      <bpmn:incoming>SF_S3_ok</bpmn:incoming>
+      <bpmn:outgoing>SF_S5</bpmn:outgoing>
+      <bpmn:startEvent id="Start_T_Scan" />
+      <bpmn:userTask id="Task_ScanItem" name="Сканировать товар" />
+      <bpmn:serviceTask id="Task_RecordItemInIS" name="Зафиксировать товар в ИС (короткая транзакция)" />
+      <bpmn:exclusiveGateway id="Gateway_ItemsLeft" name="Еще есть товары?" default="SF_T_NoMore" />
+      <bpmn:endEvent id="End_T_ScanDone" />
+      <bpmn:sequenceFlow id="SF_T1" sourceRef="Start_T_Scan" targetRef="Task_ScanItem" />
+      <bpmn:sequenceFlow id="SF_T2" sourceRef="Task_ScanItem" targetRef="Task_RecordItemInIS" />
+      <bpmn:sequenceFlow id="SF_T3" sourceRef="Task_RecordItemInIS" targetRef="Gateway_ItemsLeft" />
+      <bpmn:sequenceFlow id="SF_T_More" name="Да" sourceRef="Gateway_ItemsLeft" targetRef="Task_ScanItem" />
+      <bpmn:sequenceFlow id="SF_T_NoMore" name="Нет" sourceRef="Gateway_ItemsLeft" targetRef="End_T_ScanDone" />
+    </bpmn:transaction>
+
+    <!-- Offer promotions and bag -->
+    <bpmn:userTask id="Task_OfferPromos" name="Предложить акции и пакет">
+      <bpmn:incoming>SF_S5</bpmn:incoming>
+      <bpmn:outgoing>SF_S6</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_PromoDecision" name="Клиент согласен?" default="SF_S6_no">
+      <bpmn:incoming>SF_S6</bpmn:incoming>
+      <bpmn:outgoing>SF_S6_yes</bpmn:outgoing>
+      <bpmn:outgoing>SF_S6_no</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:transaction id="Trans_AddPromos" name="Добавить акции/пакет (транзакционно)">
+      <bpmn:incoming>SF_S6_yes</bpmn:incoming>
+      <bpmn:outgoing>SF_S7</bpmn:outgoing>
+      <bpmn:startEvent id="Start_T_Promo" />
+      <bpmn:userTask id="Task_ScanPromo" name="Сканировать акцию/пакет" />
+      <bpmn:serviceTask id="Task_RecordPromo" name="Зафиксировать в ИС (короткая транзакция)" />
+      <bpmn:endEvent id="End_T_Promo" />
+      <bpmn:sequenceFlow id="SF_TP1" sourceRef="Start_T_Promo" targetRef="Task_ScanPromo" />
+      <bpmn:sequenceFlow id="SF_TP2" sourceRef="Task_ScanPromo" targetRef="Task_RecordPromo" />
+      <bpmn:sequenceFlow id="SF_TP3" sourceRef="Task_RecordPromo" targetRef="End_T_Promo" />
+    </bpmn:transaction>
+
+    <!-- Announce total and choose payment -->
+    <bpmn:userTask id="Task_AnnounceTotalAndAskPayment" name="Озвучить сумму и спросить способ оплаты">
+      <bpmn:incoming>SF_S6_no</bpmn:incoming>
+      <bpmn:incoming>SF_S7</bpmn:incoming>
+      <bpmn:outgoing>SF_S8</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:inclusiveGateway id="Gateway_SelectPayments" name="Выбор способов оплаты (возможна комбинация)" default="SF_S8_toCheck">
+      <bpmn:incoming>SF_S8</bpmn:incoming>
+      <bpmn:outgoing>SF_S8_cash</bpmn:outgoing>
+      <bpmn:outgoing>SF_S8_card</bpmn:outgoing>
+      <bpmn:outgoing>SF_S8_gift</bpmn:outgoing>
+      <bpmn:outgoing>SF_S8_toCheck</bpmn:outgoing>
+    </bpmn:inclusiveGateway>
+
+    <!-- Cash branch -->
+    <bpmn:userTask id="Task_ReceiveCash" name="Принять наличные и выдать сдачу при необходимости">
+      <bpmn:incoming>SF_S8_cash</bpmn:incoming>
+      <bpmn:outgoing>SF_S9_cash_done</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <!-- Gift card branch -->
+    <bpmn:userTask id="Task_ProcessGiftCard" name="Принять подарочную карту">
+      <bpmn:incoming>SF_S8_gift</bpmn:incoming>
+      <bpmn:outgoing>SF_S9_gift_done</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <!-- Non-cash branch (transactional exchange with bank) -->
+    <bpmn:transaction id="Trans_CardPayment" name="Безналичная оплата (транзакция)">
+      <bpmn:incoming>SF_S8_card</bpmn:incoming>
+      <bpmn:outgoing>SF_S9_card_done</bpmn:outgoing>
+      <bpmn:startEvent id="Start_T_Pay" />
+      <bpmn:serviceTask id="Task_FormPaymentRequest" name="Сформировать запрос на оплату" />
+      <bpmn:intermediateThrowEvent id="Event_SendRequest" name="Отправить запрос" />
+      <bpmn:intermediateCatchEvent id="Event_WaitAuth" name="Ожидать подтверждение" />
+      <bpmn:serviceTask id="Task_RecordPaymentResult" name="Зафиксировать результат оплаты" />
+      <bpmn:endEvent id="End_T_Pay" />
+      <bpmn:sequenceFlow id="SF_TPay1" sourceRef="Start_T_Pay" targetRef="Task_FormPaymentRequest" />
+      <bpmn:sequenceFlow id="SF_TPay2" sourceRef="Task_FormPaymentRequest" targetRef="Event_SendRequest" />
+      <bpmn:sequenceFlow id="SF_TPay3" sourceRef="Event_SendRequest" targetRef="Event_WaitAuth" />
+      <bpmn:sequenceFlow id="SF_TPay4" sourceRef="Event_WaitAuth" targetRef="Task_RecordPaymentResult" />
+      <bpmn:sequenceFlow id="SF_TPay5" sourceRef="Task_RecordPaymentResult" targetRef="End_T_Pay" />
+    </bpmn:transaction>
+
+    <!-- Join payments and check full payment -->
+    <bpmn:inclusiveGateway id="Gateway_PaymentsJoin" name="Синхронизация выбранных оплат">
+      <bpmn:incoming>SF_S9_cash_done</bpmn:incoming>
+      <bpmn:incoming>SF_S9_gift_done</bpmn:incoming>
+      <bpmn:incoming>SF_S9_card_done</bpmn:incoming>
+      <bpmn:incoming>SF_S8_toCheck</bpmn:incoming>
+      <bpmn:outgoing>SF_S10</bpmn:outgoing>
+    </bpmn:inclusiveGateway>
+    <bpmn:exclusiveGateway id="Gateway_IsFullyPaid" name="Полностью оплачено?" default="SF_S10_no">
+      <bpmn:incoming>SF_S10</bpmn:incoming>
+      <bpmn:outgoing>SF_S10_yes</bpmn:outgoing>
+      <bpmn:outgoing>SF_S10_no</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <!-- Receipt printing decision and finish -->
+    <bpmn:exclusiveGateway id="Gateway_PrintReceipt" name="Печатать чек?" default="SF_S11_no">
+      <bpmn:incoming>SF_S10_yes</bpmn:incoming>
+      <bpmn:outgoing>SF_S11_yes</bpmn:outgoing>
+      <bpmn:outgoing>SF_S11_no</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="Task_PrintReceipt" name="Напечатать чек">
+      <bpmn:incoming>SF_S11_yes</bpmn:incoming>
+      <bpmn:outgoing>SF_S12</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="Task_HandOverReceipt" name="Выдать чек клиенту">
+      <bpmn:incoming>SF_S12</bpmn:incoming>
+      <bpmn:outgoing>SF_S13</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="Task_CompleteSale" name="Установить статус ЭД 'выполнен и оплачен'">
+      <bpmn:incoming>SF_S13</bpmn:incoming>
+      <bpmn:incoming>SF_S11_no</bpmn:incoming>
+      <bpmn:outgoing>SF_S14</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="End_FreeDeskReady" name="Режим 'Свободная касса'">
+      <bpmn:incoming>SF_S14</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- Store sequence flows -->
+    <bpmn:sequenceFlow id="SF_S1" sourceRef="Start_FreeDesk" targetRef="Task_StartService" />
+    <bpmn:sequenceFlow id="SF_S2" sourceRef="Task_StartService" targetRef="Task_CreateSaleED" />
+    <bpmn:sequenceFlow id="SF_S3" sourceRef="Task_CreateSaleED" targetRef="Gateway_CreateSaleOK" />
+    <bpmn:sequenceFlow id="SF_S3_fail" name="Да, ошибка" sourceRef="Gateway_CreateSaleOK" targetRef="End_Abort" />
+    <bpmn:sequenceFlow id="SF_S3_ok" name="Нет, все нормально" sourceRef="Gateway_CreateSaleOK" targetRef="Trans_ScanItems" />
+    <bpmn:sequenceFlow id="SF_S5" sourceRef="Trans_ScanItems" targetRef="Task_OfferPromos" />
+    <bpmn:sequenceFlow id="SF_S6" sourceRef="Task_OfferPromos" targetRef="Gateway_PromoDecision" />
+    <bpmn:sequenceFlow id="SF_S6_yes" name="Да" sourceRef="Gateway_PromoDecision" targetRef="Trans_AddPromos" />
+    <bpmn:sequenceFlow id="SF_S6_no" name="Нет" sourceRef="Gateway_PromoDecision" targetRef="Task_AnnounceTotalAndAskPayment" />
+    <bpmn:sequenceFlow id="SF_S7" sourceRef="Trans_AddPromos" targetRef="Task_AnnounceTotalAndAskPayment" />
+    <bpmn:sequenceFlow id="SF_S8" sourceRef="Task_AnnounceTotalAndAskPayment" targetRef="Gateway_SelectPayments" />
+    <bpmn:sequenceFlow id="SF_S8_cash" name="Наличные" sourceRef="Gateway_SelectPayments" targetRef="Task_ReceiveCash" />
+    <bpmn:sequenceFlow id="SF_S8_card" name="Безнал" sourceRef="Gateway_SelectPayments" targetRef="Trans_CardPayment" />
+    <bpmn:sequenceFlow id="SF_S8_gift" name="Подарочная карта" sourceRef="Gateway_SelectPayments" targetRef="Task_ProcessGiftCard" />
+    <bpmn:sequenceFlow id="SF_S8_toCheck" name="Перейти к проверке" sourceRef="Gateway_SelectPayments" targetRef="Gateway_PaymentsJoin" />
+    <bpmn:sequenceFlow id="SF_S9_cash_done" sourceRef="Task_ReceiveCash" targetRef="Gateway_PaymentsJoin" />
+    <bpmn:sequenceFlow id="SF_S9_gift_done" sourceRef="Task_ProcessGiftCard" targetRef="Gateway_PaymentsJoin" />
+    <bpmn:sequenceFlow id="SF_S9_card_done" sourceRef="Trans_CardPayment" targetRef="Gateway_PaymentsJoin" />
+    <bpmn:sequenceFlow id="SF_S10" sourceRef="Gateway_PaymentsJoin" targetRef="Gateway_IsFullyPaid" />
+    <bpmn:sequenceFlow id="SF_S10_yes" name="Да" sourceRef="Gateway_IsFullyPaid" targetRef="Gateway_PrintReceipt" />
+    <bpmn:sequenceFlow id="SF_S10_no" name="Нет" sourceRef="Gateway_IsFullyPaid" targetRef="Gateway_SelectPayments" />
+    <bpmn:sequenceFlow id="SF_S11_yes" name="Да" sourceRef="Gateway_PrintReceipt" targetRef="Task_PrintReceipt" />
+    <bpmn:sequenceFlow id="SF_S11_no" name="Нет" sourceRef="Gateway_PrintReceipt" targetRef="Task_CompleteSale" />
+    <bpmn:sequenceFlow id="SF_S12" sourceRef="Task_PrintReceipt" targetRef="Task_HandOverReceipt" />
+    <bpmn:sequenceFlow id="SF_S13" sourceRef="Task_HandOverReceipt" targetRef="Task_CompleteSale" />
+    <bpmn:sequenceFlow id="SF_S14" sourceRef="Task_CompleteSale" targetRef="End_FreeDeskReady" />
+  </bpmn:process>
+
+  <!-- Bank Acquirer Process -->
+  <bpmn:process id="Process_Bank" name="Процесс банка-эквайера" isExecutable="true">
+    <bpmn:startEvent id="Start_Bank" name="Ожидание запросов">
+      <bpmn:outgoing>SF_B1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:intermediateCatchEvent id="Task_AuthorizePayment" name="Получить запрос на оплату">
+      <bpmn:incoming>SF_B1</bpmn:incoming>
+      <bpmn:outgoing>SF_B2</bpmn:outgoing>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:serviceTask id="Task_CheckBalance" name="Проверить баланс и авторизовать">
+      <bpmn:incoming>SF_B2</bpmn:incoming>
+      <bpmn:outgoing>SF_B3</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:intermediateThrowEvent id="Task_SendAuthorizationResult" name="Отправить подтверждение">
+      <bpmn:incoming>SF_B3</bpmn:incoming>
+      <bpmn:outgoing>SF_B4</bpmn:outgoing>
+    </bpmn:intermediateThrowEvent>
+    <bpmn:endEvent id="End_BankIdle" name="Ожидание следующего запроса">
+      <bpmn:incoming>SF_B4</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="SF_B1" sourceRef="Start_Bank" targetRef="Task_AuthorizePayment" />
+    <bpmn:sequenceFlow id="SF_B2" sourceRef="Task_AuthorizePayment" targetRef="Task_CheckBalance" />
+    <bpmn:sequenceFlow id="SF_B3" sourceRef="Task_CheckBalance" targetRef="Task_SendAuthorizationResult" />
+    <bpmn:sequenceFlow id="SF_B4" sourceRef="Task_SendAuthorizationResult" targetRef="End_BankIdle" />
+  </bpmn:process>
+
+</bpmn:definitions>
+
