@@ -79,11 +79,20 @@
         <mxCell id="k_change" value="Выдать сдачу (если нужно)" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="lane_cashier">
           <mxGeometry x="1540" y="130" width="160" height="50" as="geometry"/>
         </mxCell>
+        <mxCell id="k_approved" value="Оплата подтверждена" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="lane_cashier">
+          <mxGeometry x="1320" y="40" width="120" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="k_declined" value="Отказ/таймаут" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="lane_cashier">
+          <mxGeometry x="1320" y="95" width="120" height="30" as="geometry"/>
+        </mxCell>
         <mxCell id="k_print" value="Пробить чек" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="lane_cashier">
           <mxGeometry x="1540" y="60" width="160" height="50" as="geometry"/>
         </mxCell>
         <mxCell id="k_end" value="Свободная касса" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="lane_cashier">
           <mxGeometry x="1710" y="70" width="30" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="k_abort" value="Прерывание (ошибка)" style="ellipse;whiteSpace=wrap;html=1;strokeColor=#cc0000;" vertex="1" parent="lane_cashier">
+          <mxGeometry x="220" y="170" width="180" height="40" as="geometry"/>
         </mxCell>
 
         <!-- Store IS nodes -->
@@ -150,7 +159,11 @@
         <mxCell id="k6" edge="1" parent="1" source="k_pay_gateway" target="k_initiate_noncash" style="endArrow=block;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;"/>
         <mxCell id="k7" edge="1" parent="1" source="k_pay_gateway" target="k_cash_recv" style="endArrow=block;html=1;entryX=0;entryY=0.5;"/>
         <mxCell id="k8" edge="1" parent="1" source="k_cash_recv" target="k_change" style="endArrow=block;html=1;"/>
-        <mxCell id="k9" edge="1" parent="1" source="k_initiate_noncash" target="k_print" style="endArrow=block;html=1;dashed=1;opacity=50;"/>
+        <mxCell id="ks_to_is_auth" edge="1" parent="1" source="k_initiate_noncash" target="is_send_auth" style="endArrow=block;html=1;"/>
+        <mxCell id="k12" edge="1" parent="1" source="k_approved" target="k_print" style="endArrow=block;html=1;"/>
+        <mxCell id="k13" edge="1" parent="1" source="k_declined" target="k_pay_gateway" style="endArrow=block;html=1;"/>
+        <mxCell id="k_err1" edge="1" parent="1" source="k_create" target="k_abort" style="endArrow=block;html=1;strokeColor=#cc0000;dashed=1;"/>
+        <mxCell id="is_err1" edge="1" parent="1" source="is_register" target="k_abort" style="endArrow=block;html=1;strokeColor=#cc0000;dashed=1;"/>
         <mxCell id="k10" edge="1" parent="1" source="k_change" target="k_print" style="endArrow=block;html=1;"/>
         <mxCell id="k11" edge="1" parent="1" source="k_print" target="k_end" style="endArrow=block;html=1;"/>
 
@@ -174,8 +187,8 @@
         <mxCell id="m5" edge="1" parent="1" source="is_send_auth" target="a_start" style="dashed=1;endArrow=block;endFill=0;html=1;strokeColor=#0000cc;"/>
         <mxCell id="m6" edge="1" parent="1" source="a_ok" target="is_recv_ok" style="dashed=1;endArrow=block;endFill=0;html=1;strokeColor=#0000cc;"/>
         <mxCell id="m7" edge="1" parent="1" source="a_fail" target="is_recv_fail" style="dashed=1;endArrow=block;endFill=0;html=1;strokeColor=#0000cc;"/>
-        <mxCell id="m8" edge="1" parent="1" source="is_recv_ok" target="k_print" style="dashed=1;endArrow=block;endFill=0;html=1;strokeColor=#0000cc;"/>
-        <mxCell id="m9" edge="1" parent="1" source="is_recv_fail" target="k_pay_gateway" style="dashed=1;endArrow=block;endFill=0;html=1;strokeColor=#0000cc;"/>
+        <mxCell id="m8" edge="1" parent="1" source="is_recv_ok" target="k_approved" style="dashed=1;endArrow=block;endFill=0;html=1;strokeColor=#0000cc;"/>
+        <mxCell id="m9" edge="1" parent="1" source="is_recv_fail" target="k_declined" style="dashed=1;endArrow=block;endFill=0;html=1;strokeColor=#0000cc;"/>
         <mxCell id="m10" edge="1" parent="1" source="c_pay_choice" target="k_pay_gateway" style="dashed=1;endArrow=block;endFill=0;html=1;strokeColor=#0000cc;"/>
         <mxCell id="m11" edge="1" parent="1" source="c_pay_choice" target="k_cash_recv" style="dashed=1;endArrow=block;endFill=0;html=1;strokeColor=#0000cc;"/>
         <mxCell id="m12" edge="1" parent="1" source="k_change" target="c_pay_choice" style="dashed=1;endArrow=block;endFill=0;html=1;strokeColor=#0000cc;"/>
