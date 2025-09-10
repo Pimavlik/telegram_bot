@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_StoreVisit_V2" targetNamespace="http://example.com/bpmn/StoreVisitV2">
+  <bpmn:process id="Process_StoreVisit_V2" name="Покупка в магазине: расширенный сценарий оплаты" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_Actors_V2">
+      <bpmn:lane id="Lane_Customer" name="Покупатель">
+        <bpmn:flowNodeRef>StartEvent_RealizedNeed</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_GoToStore</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_TakeBasket</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_PickGoods</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_GoToCash</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_PutOnBelt</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ConfirmPayment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_TakeGoodsAndLeave</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Cashier" name="Кассир">
+        <bpmn:flowNodeRef>Task_ServiceStart</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ScanItems</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_AllItemsScanned</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_OfferPromos</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_AnnounceTotal</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_GiftCard</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ScanGiftCard</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_PaymentMethod</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_InitiateCardPayment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ReceiveCashAndGiveChange</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_RemainingAfterCash</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_Combined_NextMethod</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_InitiateCardPayment_Partial</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ReceiveCashAndGiveChange_Partial</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_Combined_Remaining</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_PrintReceipt</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_StoreIS" name="ИС магазина">
+        <bpmn:flowNodeRef>Task_CreateSaleDocument</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_RecordScan</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_CheckAndDeductGiftCard</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_RecordGiftCardApplied</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_RecordPaymentAttempt</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_RequestAcquirer</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_RecordPaymentDecline</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_RecordCashReceived</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_SetSaleDonePaid</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Acquirer" name="Банк-эквайер">
+        <bpmn:flowNodeRef>Task_AcquirerCheckAndRespond</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+
+    <!-- Общая часть -->
+    <bpmn:startEvent id="StartEvent_RealizedNeed" name="Закончились продукты"/>
+
+    <bpmn:task id="Task_GoToStore" name="Идёт в магазин"/>
+    <bpmn:task id="Task_TakeBasket" name="Берёт корзинку"/>
+    <bpmn:task id="Task_PickGoods" name="Подбирает товары по списку"/>
+    <bpmn:task id="Task_GoToCash" name="Идёт к кассам и ждёт очереди"/>
+    <bpmn:task id="Task_PutOnBelt" name="Выкладывает товары на ленту"/>
+    <bpmn:task id="Task_ServiceStart" name="Начинает обслуживание"/>
+
+    <bpmn:task id="Task_CreateSaleDocument" name="Создание документа продажа"/>
+    <bpmn:exclusiveGateway id="Gateway_ErrorCheck" name="Ошибка при создании?" default="Flow_ErrorCheck_No"/>
+    <bpmn:endEvent id="EndEvent_Interrupted" name="Прерывание процесса"/>
+
+    <bpmn:task id="Task_ScanItems" name="Сканирует товары"/>
+    <bpmn:task id="Task_RecordScan" name="Фиксация сканирования (транзакционно)"/>
+    <bpmn:exclusiveGateway id="Gateway_AllItemsScanned" name="Все товары пробиты?" default="Flow_AllItemsScanned_No"/>
+    <bpmn:task id="Task_OfferPromos" name="Предлагает акции и пакет"/>
+    <bpmn:task id="Task_AnnounceTotal" name="Озвучивает итог и способ оплаты"/>
+
+    <!-- Подарочная карта -->
+    <bpmn:exclusiveGateway id="Gateway_GiftCard" name="Есть подарочная карта?"/>
+    <bpmn:task id="Task_ScanGiftCard" name="Сканирует/вводит подарочную карту"/>
+    <bpmn:task id="Task_CheckAndDeductGiftCard" name="Проверка баланса и списание с Подарочной карты"/>
+    <bpmn:task id="Task_RecordGiftCardApplied" name="Запись списания Подарочной карты (транзакционно)"/>
+    <bpmn:exclusiveGateway id="Gateway_RemainingAfterGiftCard" name="Остаток > 0?"/>
+
+    <!-- Выбор способа оплаты -->
+    <bpmn:exclusiveGateway id="Gateway_PaymentMethod" name="Способ оплаты?"/>
+
+    <!-- Безналичная оплата -->
+    <bpmn:task id="Task_InitiateCardPayment" name="Инициирует безналичный режим"/>
+    <bpmn:task id="Task_RecordPaymentAttempt" name="Запись попытки оплаты (транзакционно)"/>
+    <bpmn:task id="Task_RequestAcquirer" name="Формирует запрос эквайеру"/>
+    <bpmn:task id="Task_ConfirmPayment" name="Клиент подтверждает оплату на терминале"/>
+    <bpmn:task id="Task_AcquirerCheckAndRespond" name="Проверка средств и ответ"/>
+    <bpmn:exclusiveGateway id="Gateway_PaymentSuccess" name="Оплата успешна?" default="Flow_PaymentSuccess_No"/>
+    <bpmn:task id="Task_RecordPaymentDecline" name="Запись отказа банка (транзакционно)"/>
+    <bpmn:exclusiveGateway id="Gateway_PaymentRetry" name="Повторить/изменить способ?"/>
+
+    <!-- Наличные -->
+    <bpmn:task id="Task_ReceiveCashAndGiveChange" name="Принимает наличные и выдаёт сдачу"/>
+    <bpmn:task id="Task_RecordCashReceived" name="Запись приёма наличных (транзакционно)"/>
+    <bpmn:exclusiveGateway id="Gateway_RemainingAfterCash" name="Остаток > 0?"/>
+
+    <!-- Комбинированная оплата -->
+    <bpmn:exclusiveGateway id="Gateway_Combined_NextMethod" name="Комбинированно: следующий способ?"/>
+    <bpmn:task id="Task_InitiateCardPayment_Partial" name="Инициирует безнал на остаток"/>
+    <bpmn:task id="Task_ReceiveCashAndGiveChange_Partial" name="Принимает наличные часть суммы"/>
+    <bpmn:exclusiveGateway id="Gateway_Combined_Remaining" name="Комбинированно: остаток > 0?"/>
+
+    <!-- Завершение -->
+    <bpmn:exclusiveGateway id="Gateway_Paid" name="Покупка оплачена"/>
+    <bpmn:task id="Task_PrintReceipt" name="Пробивает чек"/>
+    <bpmn:task id="Task_SetSaleDonePaid" name="Документ продажа: выполнен и оплачен"/>
+    <bpmn:task id="Task_TakeGoodsAndLeave" name="Забирает товары/сдачу и уходит"/>
+    <bpmn:endEvent id="EndEvent_Done" name="Завершено"/>
+
+    <!-- Потоки -->
+    <bpmn:sequenceFlow id="F01" sourceRef="StartEvent_RealizedNeed" targetRef="Task_GoToStore"/>
+    <bpmn:sequenceFlow id="F02" sourceRef="Task_GoToStore" targetRef="Task_TakeBasket"/>
+    <bpmn:sequenceFlow id="F03" sourceRef="Task_TakeBasket" targetRef="Task_PickGoods"/>
+    <bpmn:sequenceFlow id="F04" sourceRef="Task_PickGoods" targetRef="Task_GoToCash"/>
+    <bpmn:sequenceFlow id="F05" sourceRef="Task_GoToCash" targetRef="Task_PutOnBelt"/>
+    <bpmn:sequenceFlow id="F06" sourceRef="Task_PutOnBelt" targetRef="Task_ServiceStart"/>
+    <bpmn:sequenceFlow id="F07" sourceRef="Task_ServiceStart" targetRef="Task_CreateSaleDocument"/>
+    <bpmn:sequenceFlow id="F08" sourceRef="Task_CreateSaleDocument" targetRef="Gateway_ErrorCheck"/>
+    <bpmn:sequenceFlow id="F09" name="Да" sourceRef="Gateway_ErrorCheck" targetRef="EndEvent_Interrupted"/>
+    <bpmn:sequenceFlow id="F10" name="Нет" sourceRef="Gateway_ErrorCheck" targetRef="Task_ScanItems"/>
+    <bpmn:sequenceFlow id="F11" sourceRef="Task_ScanItems" targetRef="Task_RecordScan"/>
+    <bpmn:sequenceFlow id="F12" sourceRef="Task_RecordScan" targetRef="Gateway_AllItemsScanned"/>
+    <bpmn:sequenceFlow id="F13" name="Нет" sourceRef="Gateway_AllItemsScanned" targetRef="Task_ScanItems"/>
+    <bpmn:sequenceFlow id="F14" name="Да" sourceRef="Gateway_AllItemsScanned" targetRef="Task_OfferPromos"/>
+    <bpmn:sequenceFlow id="F15" sourceRef="Task_OfferPromos" targetRef="Task_AnnounceTotal"/>
+
+    <!-- Gift Card path -->
+    <bpmn:sequenceFlow id="F16" sourceRef="Task_AnnounceTotal" targetRef="Gateway_GiftCard"/>
+    <bpmn:sequenceFlow id="F17" name="Да" sourceRef="Gateway_GiftCard" targetRef="Task_ScanGiftCard"/>
+    <bpmn:sequenceFlow id="F18" sourceRef="Task_ScanGiftCard" targetRef="Task_CheckAndDeductGiftCard"/>
+    <bpmn:sequenceFlow id="F19" sourceRef="Task_CheckAndDeductGiftCard" targetRef="Task_RecordGiftCardApplied"/>
+    <bpmn:sequenceFlow id="F20" sourceRef="Task_RecordGiftCardApplied" targetRef="Gateway_RemainingAfterGiftCard"/>
+    <bpmn:sequenceFlow id="F21" name="Нет (остатка нет)" sourceRef="Gateway_RemainingAfterGiftCard" targetRef="Gateway_Paid"/>
+    <bpmn:sequenceFlow id="F22" name="Да (есть остаток)" sourceRef="Gateway_RemainingAfterGiftCard" targetRef="Gateway_PaymentMethod"/>
+    <bpmn:sequenceFlow id="F23" name="Нет" sourceRef="Gateway_GiftCard" targetRef="Gateway_PaymentMethod"/>
+
+    <!-- Non-cash path -->
+    <bpmn:sequenceFlow id="F24" name="Безнал" sourceRef="Gateway_PaymentMethod" targetRef="Task_InitiateCardPayment"/>
+    <bpmn:sequenceFlow id="F25" sourceRef="Task_InitiateCardPayment" targetRef="Task_RecordPaymentAttempt"/>
+    <bpmn:sequenceFlow id="F26" sourceRef="Task_RecordPaymentAttempt" targetRef="Task_RequestAcquirer"/>
+    <bpmn:sequenceFlow id="F27" sourceRef="Task_RequestAcquirer" targetRef="Task_ConfirmPayment"/>
+    <bpmn:sequenceFlow id="F28" sourceRef="Task_ConfirmPayment" targetRef="Task_AcquirerCheckAndRespond"/>
+    <bpmn:sequenceFlow id="F29" sourceRef="Task_AcquirerCheckAndRespond" targetRef="Gateway_PaymentSuccess"/>
+    <bpmn:sequenceFlow id="F30" name="Да" sourceRef="Gateway_PaymentSuccess" targetRef="Gateway_Paid"/>
+    <bpmn:sequenceFlow id="F31" name="Нет" sourceRef="Gateway_PaymentSuccess" targetRef="Task_RecordPaymentDecline"/>
+    <bpmn:sequenceFlow id="F32" sourceRef="Task_RecordPaymentDecline" targetRef="Gateway_PaymentRetry"/>
+    <bpmn:sequenceFlow id="F33" name="Повтор/другой способ" sourceRef="Gateway_PaymentRetry" targetRef="Gateway_PaymentMethod"/>
+    <bpmn:sequenceFlow id="F34" name="Отказ" sourceRef="Gateway_PaymentRetry" targetRef="EndEvent_Interrupted"/>
+
+    <!-- Cash path -->
+    <bpmn:sequenceFlow id="F35" name="Наличные" sourceRef="Gateway_PaymentMethod" targetRef="Task_ReceiveCashAndGiveChange"/>
+    <bpmn:sequenceFlow id="F36" sourceRef="Task_ReceiveCashAndGiveChange" targetRef="Task_RecordCashReceived"/>
+    <bpmn:sequenceFlow id="F37" sourceRef="Task_RecordCashReceived" targetRef="Gateway_RemainingAfterCash"/>
+    <bpmn:sequenceFlow id="F38" name="Да (остался остаток)" sourceRef="Gateway_RemainingAfterCash" targetRef="Gateway_PaymentMethod"/>
+    <bpmn:sequenceFlow id="F39" name="Нет (оплачено)" sourceRef="Gateway_RemainingAfterCash" targetRef="Gateway_Paid"/>
+
+    <!-- Combined path -->
+    <bpmn:sequenceFlow id="F40" name="Комбинированно" sourceRef="Gateway_PaymentMethod" targetRef="Gateway_Combined_NextMethod"/>
+    <bpmn:sequenceFlow id="F41" name="Нал часть" sourceRef="Gateway_Combined_NextMethod" targetRef="Task_ReceiveCashAndGiveChange_Partial"/>
+    <bpmn:sequenceFlow id="F42" sourceRef="Task_ReceiveCashAndGiveChange_Partial" targetRef="Task_RecordCashReceived"/>
+    <bpmn:sequenceFlow id="F43" name="Карта часть" sourceRef="Gateway_Combined_NextMethod" targetRef="Task_InitiateCardPayment_Partial"/>
+    <bpmn:sequenceFlow id="F44" sourceRef="Task_InitiateCardPayment_Partial" targetRef="Task_RecordPaymentAttempt"/>
+    <bpmn:sequenceFlow id="F45" sourceRef="Task_RecordPaymentAttempt" targetRef="Task_RequestAcquirer"/>
+    <bpmn:sequenceFlow id="F46" sourceRef="Task_RequestAcquirer" targetRef="Task_ConfirmPayment"/>
+    <bpmn:sequenceFlow id="F47" sourceRef="Task_ConfirmPayment" targetRef="Task_AcquirerCheckAndRespond"/>
+    <bpmn:sequenceFlow id="F48" sourceRef="Task_AcquirerCheckAndRespond" targetRef="Gateway_PaymentSuccess"/>
+    <bpmn:sequenceFlow id="F49" name="Комбинированно: далее" sourceRef="Task_RecordCashReceived" targetRef="Gateway_Combined_Remaining"/>
+    <bpmn:sequenceFlow id="F50" name="Комбинированно: отказ" sourceRef="Gateway_PaymentSuccess" targetRef="Task_RecordPaymentDecline"/>
+    <bpmn:sequenceFlow id="F51" sourceRef="Task_RecordPaymentDecline" targetRef="Gateway_Combined_Remaining"/>
+    <bpmn:sequenceFlow id="F52" name="Комбинированно: остаток > 0?" sourceRef="Gateway_Combined_Remaining" targetRef="Gateway_Combined_NextMethod"/>
+    <bpmn:sequenceFlow id="F53" name="Комбинированно: остатка нет" sourceRef="Gateway_Combined_Remaining" targetRef="Gateway_Paid"/>
+
+    <!-- Завершение -->
+    <bpmn:sequenceFlow id="F60" sourceRef="Gateway_Paid" targetRef="Task_PrintReceipt"/>
+    <bpmn:sequenceFlow id="F61" sourceRef="Task_PrintReceipt" targetRef="Task_SetSaleDonePaid"/>
+    <bpmn:sequenceFlow id="F62" sourceRef="Task_SetSaleDonePaid" targetRef="Task_TakeGoodsAndLeave"/>
+    <bpmn:sequenceFlow id="F63" sourceRef="Task_TakeGoodsAndLeave" targetRef="EndEvent_Done"/>
+  </bpmn:process>
+</bpmn:definitions>
+

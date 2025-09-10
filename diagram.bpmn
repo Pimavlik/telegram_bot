@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_StoreVisit" targetNamespace="http://example.com/bpmn/StoreVisit">
+  <bpmn:process id="Process_StoreVisit" name="Поход в магазин и покупка продуктов" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_Actors">
+      <bpmn:lane id="Lane_Customer" name="Покупатель">
+        <bpmn:flowNodeRef>StartEvent_RealizedNeed</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_GoToStore</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_TakeBasket</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_PickGoods</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_GoToCash</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_PutOnBelt</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ConfirmPayment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_PayCashOrOther</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_TakeGoodsAndLeave</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Cashier" name="Кассир">
+        <bpmn:flowNodeRef>Task_ServiceStart</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ScanItems</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_AllItemsScanned</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_OfferPromos</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_AnnounceTotal</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_PaymentMethod</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_InitiateCardPayment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ReceiveCashAndGiveChange</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_PrintReceipt</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_StoreIS" name="ИС магазина">
+        <bpmn:flowNodeRef>Task_CreateSaleDocument</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_RecordScan</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_RequestAcquirer</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_SetSaleDonePaid</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Acquirer" name="Банк-эквайер">
+        <bpmn:flowNodeRef>Task_AcquirerCheckAndRespond</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+
+    <!-- Flow elements -->
+    <bpmn:startEvent id="StartEvent_RealizedNeed" name="Закончились продукты">
+      <bpmn:outgoing>Flow_Start_To_GoToStore</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:task id="Task_GoToStore" name="Идёт в магазин">
+      <bpmn:incoming>Flow_Start_To_GoToStore</bpmn:incoming>
+      <bpmn:outgoing>Flow_GoToStore_To_TakeBasket</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:task id="Task_TakeBasket" name="Берёт корзинку">
+      <bpmn:incoming>Flow_GoToStore_To_TakeBasket</bpmn:incoming>
+      <bpmn:outgoing>Flow_TakeBasket_To_PickGoods</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:task id="Task_PickGoods" name="Подбирает товары по списку">
+      <bpmn:incoming>Flow_TakeBasket_To_PickGoods</bpmn:incoming>
+      <bpmn:outgoing>Flow_PickGoods_To_GoToCash</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:task id="Task_GoToCash" name="Идёт к кассам и ждёт очереди">
+      <bpmn:incoming>Flow_PickGoods_To_GoToCash</bpmn:incoming>
+      <bpmn:outgoing>Flow_GoToCash_To_PutOnBelt</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:task id="Task_PutOnBelt" name="Выкладывает товары на ленту">
+      <bpmn:incoming>Flow_GoToCash_To_PutOnBelt</bpmn:incoming>
+      <bpmn:outgoing>Flow_PutOnBelt_To_ServiceStart</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:task id="Task_ServiceStart" name="Начинает обслуживание">
+      <bpmn:incoming>Flow_PutOnBelt_To_ServiceStart</bpmn:incoming>
+      <bpmn:outgoing>Flow_ServiceStart_To_CreateSaleDocument</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:task id="Task_CreateSaleDocument" name="Создание документа продажа">
+      <bpmn:incoming>Flow_ServiceStart_To_CreateSaleDocument</bpmn:incoming>
+      <bpmn:outgoing>Flow_CreateSaleDocument_To_ErrorCheck</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:exclusiveGateway id="Gateway_ErrorCheck" name="Ошибка при создании?" default="Flow_ErrorCheck_No">
+      <bpmn:incoming>Flow_CreateSaleDocument_To_ErrorCheck</bpmn:incoming>
+      <bpmn:outgoing>Flow_ErrorCheck_No</bpmn:outgoing>
+      <bpmn:outgoing>Flow_ErrorCheck_Yes</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:endEvent id="EndEvent_Interrupted" name="Прерывание процесса">
+      <bpmn:incoming>Flow_ErrorCheck_Yes</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:task id="Task_ScanItems" name="Сканирует товары">
+      <bpmn:incoming>Flow_ErrorCheck_No</bpmn:incoming>
+      <bpmn:incoming>Flow_AllItemsScanned_No</bpmn:incoming>
+      <bpmn:outgoing>Flow_ScanItems_To_RecordScan</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:task id="Task_RecordScan" name="Фиксация сканирования (транзакционно)">
+      <bpmn:incoming>Flow_ScanItems_To_RecordScan</bpmn:incoming>
+      <bpmn:outgoing>Flow_RecordScan_To_AllItemsScanned</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:exclusiveGateway id="Gateway_AllItemsScanned" name="Все товары пробиты?" default="Flow_AllItemsScanned_No">
+      <bpmn:incoming>Flow_RecordScan_To_AllItemsScanned</bpmn:incoming>
+      <bpmn:outgoing>Flow_AllItemsScanned_No</bpmn:outgoing>
+      <bpmn:outgoing>Flow_AllItemsScanned_Yes</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:task id="Task_OfferPromos" name="Предлагает акции и пакет">
+      <bpmn:incoming>Flow_AllItemsScanned_Yes</bpmn:incoming>
+      <bpmn:outgoing>Flow_OfferPromos_To_AnnounceTotal</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:task id="Task_AnnounceTotal" name="Озвучивает итог и спрашивает оплату">
+      <bpmn:incoming>Flow_OfferPromos_To_AnnounceTotal</bpmn:incoming>
+      <bpmn:outgoing>Flow_AnnounceTotal_To_PaymentMethod</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:exclusiveGateway id="Gateway_PaymentMethod" name="Способ оплаты?">
+      <bpmn:incoming>Flow_AnnounceTotal_To_PaymentMethod</bpmn:incoming>
+      <bpmn:outgoing>Flow_PaymentMethod_Card</bpmn:outgoing>
+      <bpmn:outgoing>Flow_PaymentMethod_CashOrOther</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <!-- Безнал -->
+    <bpmn:task id="Task_InitiateCardPayment" name="Инициирует безналичный режим">
+      <bpmn:incoming>Flow_PaymentMethod_Card</bpmn:incoming>
+      <bpmn:outgoing>Flow_InitiateCard_To_RequestAcquirer</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:task id="Task_RequestAcquirer" name="Формирует запрос и соединяется с эквайером">
+      <bpmn:incoming>Flow_InitiateCard_To_RequestAcquirer</bpmn:incoming>
+      <bpmn:outgoing>Flow_RequestAcquirer_To_ConfirmPayment</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:task id="Task_ConfirmPayment" name="Клиент подтверждает оплату">
+      <bpmn:incoming>Flow_RequestAcquirer_To_ConfirmPayment</bpmn:incoming>
+      <bpmn:outgoing>Flow_ConfirmPayment_To_AcquirerCheck</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:task id="Task_AcquirerCheckAndRespond" name="Проверка и ответ банка-эквайера">
+      <bpmn:incoming>Flow_ConfirmPayment_To_AcquirerCheck</bpmn:incoming>
+      <bpmn:outgoing>Flow_AcquirerCheck_To_PaymentSuccess</bpmn:outgoing>
+      <bpmn:outgoing>Flow_AcquirerCheck_To_Interrupted</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:exclusiveGateway id="Gateway_PaymentSuccess" name="Оплата успешна?" default="Flow_PaymentSuccess_No">
+      <bpmn:incoming>Flow_AcquirerCheck_To_PaymentSuccess</bpmn:incoming>
+      <bpmn:outgoing>Flow_PaymentSuccess_Yes</bpmn:outgoing>
+      <bpmn:outgoing>Flow_PaymentSuccess_No</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <!-- Наличные и прочие способы -->
+    <bpmn:task id="Task_PayCashOrOther" name="Передаёт наличные/иной способ">
+      <bpmn:incoming>Flow_PaymentMethod_CashOrOther</bpmn:incoming>
+      <bpmn:outgoing>Flow_PayCash_To_ReceiveChange</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:task id="Task_ReceiveCashAndGiveChange" name="Принимает оплату и выдаёт сдачу">
+      <bpmn:incoming>Flow_PayCash_To_ReceiveChange</bpmn:incoming>
+      <bpmn:outgoing>Flow_ReceiveChange_To_Paid</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- Узел оплаты завершена -->
+    <bpmn:exclusiveGateway id="Gateway_Paid" name="Покупка оплачена">
+      <bpmn:incoming>Flow_PaymentSuccess_Yes</bpmn:incoming>
+      <bpmn:incoming>Flow_ReceiveChange_To_Paid</bpmn:incoming>
+      <bpmn:outgoing>Flow_Paid_To_PrintReceipt</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <bpmn:task id="Task_PrintReceipt" name="Пробивает чек">
+      <bpmn:incoming>Flow_Paid_To_PrintReceipt</bpmn:incoming>
+      <bpmn:outgoing>Flow_PrintReceipt_To_SetSaleDonePaid</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:task id="Task_SetSaleDonePaid" name="Документ продажа: выполнен и оплачен">
+      <bpmn:incoming>Flow_PrintReceipt_To_SetSaleDonePaid</bpmn:incoming>
+      <bpmn:outgoing>Flow_SetSaleDonePaid_To_FreeCashdesk</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:task id="Task_FreeCashdesk" name="Свободная касса">
+      <bpmn:incoming>Flow_SetSaleDonePaid_To_FreeCashdesk</bpmn:incoming>
+      <bpmn:outgoing>Flow_FreeCashdesk_To_TakeGoodsAndLeave</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:task id="Task_TakeGoodsAndLeave" name="Забирает товары/сдачу и уходит">
+      <bpmn:incoming>Flow_FreeCashdesk_To_TakeGoodsAndLeave</bpmn:incoming>
+      <bpmn:outgoing>Flow_TakeGoodsAndLeave_To_End</bpmn:outgoing>
+    </bpmn:task>
+
+    <bpmn:endEvent id="EndEvent_Done" name="Завершено">
+      <bpmn:incoming>Flow_TakeGoodsAndLeave_To_End</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- Flows -->
+    <bpmn:sequenceFlow id="Flow_Start_To_GoToStore" sourceRef="StartEvent_RealizedNeed" targetRef="Task_GoToStore"/>
+    <bpmn:sequenceFlow id="Flow_GoToStore_To_TakeBasket" sourceRef="Task_GoToStore" targetRef="Task_TakeBasket"/>
+    <bpmn:sequenceFlow id="Flow_TakeBasket_To_PickGoods" sourceRef="Task_TakeBasket" targetRef="Task_PickGoods"/>
+    <bpmn:sequenceFlow id="Flow_PickGoods_To_GoToCash" sourceRef="Task_PickGoods" targetRef="Task_GoToCash"/>
+    <bpmn:sequenceFlow id="Flow_GoToCash_To_PutOnBelt" sourceRef="Task_GoToCash" targetRef="Task_PutOnBelt"/>
+    <bpmn:sequenceFlow id="Flow_PutOnBelt_To_ServiceStart" sourceRef="Task_PutOnBelt" targetRef="Task_ServiceStart"/>
+    <bpmn:sequenceFlow id="Flow_ServiceStart_To_CreateSaleDocument" sourceRef="Task_ServiceStart" targetRef="Task_CreateSaleDocument"/>
+    <bpmn:sequenceFlow id="Flow_CreateSaleDocument_To_ErrorCheck" sourceRef="Task_CreateSaleDocument" targetRef="Gateway_ErrorCheck"/>
+    <bpmn:sequenceFlow id="Flow_ErrorCheck_Yes" name="Да" sourceRef="Gateway_ErrorCheck" targetRef="EndEvent_Interrupted"/>
+    <bpmn:sequenceFlow id="Flow_ErrorCheck_No" name="Нет" sourceRef="Gateway_ErrorCheck" targetRef="Task_ScanItems"/>
+    <bpmn:sequenceFlow id="Flow_ScanItems_To_RecordScan" sourceRef="Task_ScanItems" targetRef="Task_RecordScan"/>
+    <bpmn:sequenceFlow id="Flow_RecordScan_To_AllItemsScanned" sourceRef="Task_RecordScan" targetRef="Gateway_AllItemsScanned"/>
+    <bpmn:sequenceFlow id="Flow_AllItemsScanned_No" name="Нет" sourceRef="Gateway_AllItemsScanned" targetRef="Task_ScanItems"/>
+    <bpmn:sequenceFlow id="Flow_AllItemsScanned_Yes" name="Да" sourceRef="Gateway_AllItemsScanned" targetRef="Task_OfferPromos"/>
+    <bpmn:sequenceFlow id="Flow_OfferPromos_To_AnnounceTotal" sourceRef="Task_OfferPromos" targetRef="Task_AnnounceTotal"/>
+    <bpmn:sequenceFlow id="Flow_AnnounceTotal_To_PaymentMethod" sourceRef="Task_AnnounceTotal" targetRef="Gateway_PaymentMethod"/>
+    <bpmn:sequenceFlow id="Flow_PaymentMethod_Card" name="Безнал" sourceRef="Gateway_PaymentMethod" targetRef="Task_InitiateCardPayment"/>
+    <bpmn:sequenceFlow id="Flow_PaymentMethod_CashOrOther" name="Наличные/Подарочная/Комбинированно" sourceRef="Gateway_PaymentMethod" targetRef="Task_PayCashOrOther"/>
+    <bpmn:sequenceFlow id="Flow_InitiateCard_To_RequestAcquirer" sourceRef="Task_InitiateCardPayment" targetRef="Task_RequestAcquirer"/>
+    <bpmn:sequenceFlow id="Flow_RequestAcquirer_To_ConfirmPayment" sourceRef="Task_RequestAcquirer" targetRef="Task_ConfirmPayment"/>
+    <bpmn:sequenceFlow id="Flow_ConfirmPayment_To_AcquirerCheck" sourceRef="Task_ConfirmPayment" targetRef="Task_AcquirerCheckAndRespond"/>
+    <bpmn:sequenceFlow id="Flow_AcquirerCheck_To_PaymentSuccess" sourceRef="Task_AcquirerCheckAndRespond" targetRef="Gateway_PaymentSuccess"/>
+    <bpmn:sequenceFlow id="Flow_PaymentSuccess_Yes" name="Да" sourceRef="Gateway_PaymentSuccess" targetRef="Gateway_Paid"/>
+    <bpmn:sequenceFlow id="Flow_PaymentSuccess_No" name="Нет" sourceRef="Gateway_PaymentSuccess" targetRef="EndEvent_Interrupted"/>
+    <bpmn:sequenceFlow id="Flow_PayCash_To_ReceiveChange" sourceRef="Task_PayCashOrOther" targetRef="Task_ReceiveCashAndGiveChange"/>
+    <bpmn:sequenceFlow id="Flow_ReceiveChange_To_Paid" sourceRef="Task_ReceiveCashAndGiveChange" targetRef="Gateway_Paid"/>
+    <bpmn:sequenceFlow id="Flow_Paid_To_PrintReceipt" sourceRef="Gateway_Paid" targetRef="Task_PrintReceipt"/>
+    <bpmn:sequenceFlow id="Flow_PrintReceipt_To_SetSaleDonePaid" sourceRef="Task_PrintReceipt" targetRef="Task_SetSaleDonePaid"/>
+    <bpmn:sequenceFlow id="Flow_SetSaleDonePaid_To_FreeCashdesk" sourceRef="Task_SetSaleDonePaid" targetRef="Task_FreeCashdesk"/>
+    <bpmn:sequenceFlow id="Flow_FreeCashdesk_To_TakeGoodsAndLeave" sourceRef="Task_FreeCashdesk" targetRef="Task_TakeGoodsAndLeave"/>
+    <bpmn:sequenceFlow id="Flow_TakeGoodsAndLeave_To_End" sourceRef="Task_TakeGoodsAndLeave" targetRef="EndEvent_Done"/>
+  </bpmn:process>
+
+  <!-- (Примечание: для компактности DI (bpmndi) не добавлен; большинство редакторов смогут открыть модель и автолайаутить.) -->
+</bpmn:definitions>
+
