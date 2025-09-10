@@ -4,7 +4,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "render:bpmn": "node bpmn/render.js"
+    "render:bpmn": "node bpmn/render.js",
+    "render:any": "node bpmn/render-any.js"
   },
   "repository": {
     "type": "git",
