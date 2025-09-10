@@ -1,6 +1,8 @@
 ### BPMN 2.0: Поход в гипермаркет и покупка продуктов
 
-Файл модели: `store-shopping.bpmn` (BPMN 2.0 XML, без DI). Открывается в Camunda Modeler или на `https://demo.bpmn.io`. Если требуется автокомпоновка, используйте Auto Layout.
+Файлы моделей:
+- `store-shopping.bpmn` — BPMN 2.0 XML (без DI). Открывается в Camunda Modeler или на `https://demo.bpmn.io`.
+- `store-shopping.drawio` — диаграмма для `app.diagrams.net` (draw.io), готова к импорту.
 
 #### Участники (Pools/Lanes)
 - **Покупатель**
@@ -21,8 +23,8 @@
 - Сигнал `Свободная касса` завершает обслуживание.
 
 #### Как открыть
-1. Откройте `store-shopping.bpmn` в Camunda Modeler.
-2. При необходимости воспользуйтесь Auto Layout или bpmn-js Token Simulation для проигрывания сценария.
+- BPMN: откройте `store-shopping.bpmn` в Camunda Modeler; при необходимости воспользуйтесь Auto Layout или bpmn‑js Token Simulation для проигрывания.
+- diagrams.net: `File → Import From → Device…` и выберите `store-shopping.drawio`.
 
 ### BPMN 2.0: Поход в гипермаркет и покупка продуктов
 
