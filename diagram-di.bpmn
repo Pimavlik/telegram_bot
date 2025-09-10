@@ -1,0 +1,410 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_StoreVisit" targetNamespace="http://example.com/bpmn/StoreVisit">
+  <bpmn:process id="Process_StoreVisit" name="Поход в магазин и покупка продуктов" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_Actors">
+      <bpmn:lane id="Lane_Customer" name="Покупатель">
+        <bpmn:flowNodeRef>StartEvent_RealizedNeed</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_GoToStore</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_TakeBasket</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_PickGoods</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_GoToCash</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_PutOnBelt</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ConfirmPayment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_PayCashOrOther</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_TakeGoodsAndLeave</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Cashier" name="Кассир">
+        <bpmn:flowNodeRef>Task_ServiceStart</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ScanItems</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_AllItemsScanned</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_OfferPromos</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_AnnounceTotal</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_PaymentMethod</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_InitiateCardPayment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ReceiveCashAndGiveChange</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_PrintReceipt</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_StoreIS" name="ИС магазина">
+        <bpmn:flowNodeRef>Task_CreateSaleDocument</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_RecordScan</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_RequestAcquirer</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_SetSaleDonePaid</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Acquirer" name="Банк-эквайер">
+        <bpmn:flowNodeRef>Task_AcquirerCheckAndRespond</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="StartEvent_RealizedNeed" name="Закончились продукты">
+      <bpmn:outgoing>Flow_Start_To_GoToStore</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="Task_GoToStore" name="Идёт в магазин">
+      <bpmn:incoming>Flow_Start_To_GoToStore</bpmn:incoming>
+      <bpmn:outgoing>Flow_GoToStore_To_TakeBasket</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_TakeBasket" name="Берёт корзинку">
+      <bpmn:incoming>Flow_GoToStore_To_TakeBasket</bpmn:incoming>
+      <bpmn:outgoing>Flow_TakeBasket_To_PickGoods</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_PickGoods" name="Подбирает товары по списку">
+      <bpmn:incoming>Flow_TakeBasket_To_PickGoods</bpmn:incoming>
+      <bpmn:outgoing>Flow_PickGoods_To_GoToCash</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_GoToCash" name="Идёт к кассам и ждёт очереди">
+      <bpmn:incoming>Flow_PickGoods_To_GoToCash</bpmn:incoming>
+      <bpmn:outgoing>Flow_GoToCash_To_PutOnBelt</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_PutOnBelt" name="Выкладывает товары на ленту">
+      <bpmn:incoming>Flow_GoToCash_To_PutOnBelt</bpmn:incoming>
+      <bpmn:outgoing>Flow_PutOnBelt_To_ServiceStart</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_ServiceStart" name="Начинает обслуживание">
+      <bpmn:incoming>Flow_PutOnBelt_To_ServiceStart</bpmn:incoming>
+      <bpmn:outgoing>Flow_ServiceStart_To_CreateSaleDocument</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_CreateSaleDocument" name="Создание документа продажа">
+      <bpmn:incoming>Flow_ServiceStart_To_CreateSaleDocument</bpmn:incoming>
+      <bpmn:outgoing>Flow_CreateSaleDocument_To_ErrorCheck</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="Gateway_ErrorCheck" name="Ошибка при создании?" default="Flow_ErrorCheck_No">
+      <bpmn:incoming>Flow_CreateSaleDocument_To_ErrorCheck</bpmn:incoming>
+      <bpmn:outgoing>Flow_ErrorCheck_No</bpmn:outgoing>
+      <bpmn:outgoing>Flow_ErrorCheck_Yes</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="EndEvent_Interrupted" name="Прерывание процесса">
+      <bpmn:incoming>Flow_ErrorCheck_Yes</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:task id="Task_ScanItems" name="Сканирует товары">
+      <bpmn:incoming>Flow_ErrorCheck_No</bpmn:incoming>
+      <bpmn:incoming>Flow_AllItemsScanned_No</bpmn:incoming>
+      <bpmn:outgoing>Flow_ScanItems_To_RecordScan</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_RecordScan" name="Фиксация сканирования (транзакционно)">
+      <bpmn:incoming>Flow_ScanItems_To_RecordScan</bpmn:incoming>
+      <bpmn:outgoing>Flow_RecordScan_To_AllItemsScanned</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="Gateway_AllItemsScanned" name="Все товары пробиты?" default="Flow_AllItemsScanned_No">
+      <bpmn:incoming>Flow_RecordScan_To_AllItemsScanned</bpmn:incoming>
+      <bpmn:outgoing>Flow_AllItemsScanned_No</bpmn:outgoing>
+      <bpmn:outgoing>Flow_AllItemsScanned_Yes</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="Task_OfferPromos" name="Предлагает акции и пакет">
+      <bpmn:incoming>Flow_AllItemsScanned_Yes</bpmn:incoming>
+      <bpmn:outgoing>Flow_OfferPromos_To_AnnounceTotal</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_AnnounceTotal" name="Озвучивает итог и спрашивает оплату">
+      <bpmn:incoming>Flow_OfferPromos_To_AnnounceTotal</bpmn:incoming>
+      <bpmn:outgoing>Flow_AnnounceTotal_To_PaymentMethod</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="Gateway_PaymentMethod" name="Способ оплаты?">
+      <bpmn:incoming>Flow_AnnounceTotal_To_PaymentMethod</bpmn:incoming>
+      <bpmn:outgoing>Flow_PaymentMethod_Card</bpmn:outgoing>
+      <bpmn:outgoing>Flow_PaymentMethod_CashOrOther</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="Task_InitiateCardPayment" name="Инициирует безналичный режим">
+      <bpmn:incoming>Flow_PaymentMethod_Card</bpmn:incoming>
+      <bpmn:outgoing>Flow_InitiateCard_To_RequestAcquirer</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_RequestAcquirer" name="Формирует запрос и соединяется с эквайером">
+      <bpmn:incoming>Flow_InitiateCard_To_RequestAcquirer</bpmn:incoming>
+      <bpmn:outgoing>Flow_RequestAcquirer_To_ConfirmPayment</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_ConfirmPayment" name="Клиент подтверждает оплату">
+      <bpmn:incoming>Flow_RequestAcquirer_To_ConfirmPayment</bpmn:incoming>
+      <bpmn:outgoing>Flow_ConfirmPayment_To_AcquirerCheck</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_AcquirerCheckAndRespond" name="Проверка и ответ банка-эквайера">
+      <bpmn:incoming>Flow_ConfirmPayment_To_AcquirerCheck</bpmn:incoming>
+      <bpmn:outgoing>Flow_AcquirerCheck_To_PaymentSuccess</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="Gateway_PaymentSuccess" name="Оплата успешна?" default="Flow_PaymentSuccess_No">
+      <bpmn:incoming>Flow_AcquirerCheck_To_PaymentSuccess</bpmn:incoming>
+      <bpmn:outgoing>Flow_PaymentSuccess_Yes</bpmn:outgoing>
+      <bpmn:outgoing>Flow_PaymentSuccess_No</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="Task_PayCashOrOther" name="Передаёт наличные/иной способ">
+      <bpmn:incoming>Flow_PaymentMethod_CashOrOther</bpmn:incoming>
+      <bpmn:outgoing>Flow_PayCash_To_ReceiveChange</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_ReceiveCashAndGiveChange" name="Принимает оплату и выдаёт сдачу">
+      <bpmn:incoming>Flow_PayCash_To_ReceiveChange</bpmn:incoming>
+      <bpmn:outgoing>Flow_ReceiveChange_To_Paid</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="Gateway_Paid" name="Покупка оплачена">
+      <bpmn:incoming>Flow_PaymentSuccess_Yes</bpmn:incoming>
+      <bpmn:incoming>Flow_ReceiveChange_To_Paid</bpmn:incoming>
+      <bpmn:outgoing>Flow_Paid_To_PrintReceipt</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="Task_PrintReceipt" name="Пробивает чек">
+      <bpmn:incoming>Flow_Paid_To_PrintReceipt</bpmn:incoming>
+      <bpmn:outgoing>Flow_PrintReceipt_To_SetSaleDonePaid</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_SetSaleDonePaid" name="Документ продажа: выполнен и оплачен">
+      <bpmn:incoming>Flow_PrintReceipt_To_SetSaleDonePaid</bpmn:incoming>
+      <bpmn:outgoing>Flow_SetSaleDonePaid_To_FreeCashdesk</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_FreeCashdesk" name="Свободная касса">
+      <bpmn:incoming>Flow_SetSaleDonePaid_To_FreeCashdesk</bpmn:incoming>
+      <bpmn:outgoing>Flow_FreeCashdesk_To_TakeGoodsAndLeave</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_TakeGoodsAndLeave" name="Забирает товары/сдачу и уходит">
+      <bpmn:incoming>Flow_FreeCashdesk_To_TakeGoodsAndLeave</bpmn:incoming>
+      <bpmn:outgoing>Flow_TakeGoodsAndLeave_To_End</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="EndEvent_Done" name="Завершено">
+      <bpmn:incoming>Flow_TakeGoodsAndLeave_To_End</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_Start_To_GoToStore" sourceRef="StartEvent_RealizedNeed" targetRef="Task_GoToStore" />
+    <bpmn:sequenceFlow id="Flow_GoToStore_To_TakeBasket" sourceRef="Task_GoToStore" targetRef="Task_TakeBasket" />
+    <bpmn:sequenceFlow id="Flow_TakeBasket_To_PickGoods" sourceRef="Task_TakeBasket" targetRef="Task_PickGoods" />
+    <bpmn:sequenceFlow id="Flow_PickGoods_To_GoToCash" sourceRef="Task_PickGoods" targetRef="Task_GoToCash" />
+    <bpmn:sequenceFlow id="Flow_GoToCash_To_PutOnBelt" sourceRef="Task_GoToCash" targetRef="Task_PutOnBelt" />
+    <bpmn:sequenceFlow id="Flow_PutOnBelt_To_ServiceStart" sourceRef="Task_PutOnBelt" targetRef="Task_ServiceStart" />
+    <bpmn:sequenceFlow id="Flow_ServiceStart_To_CreateSaleDocument" sourceRef="Task_ServiceStart" targetRef="Task_CreateSaleDocument" />
+    <bpmn:sequenceFlow id="Flow_CreateSaleDocument_To_ErrorCheck" sourceRef="Task_CreateSaleDocument" targetRef="Gateway_ErrorCheck" />
+    <bpmn:sequenceFlow id="Flow_ErrorCheck_Yes" name="Да" sourceRef="Gateway_ErrorCheck" targetRef="EndEvent_Interrupted" />
+    <bpmn:sequenceFlow id="Flow_ErrorCheck_No" name="Нет" sourceRef="Gateway_ErrorCheck" targetRef="Task_ScanItems" />
+    <bpmn:sequenceFlow id="Flow_ScanItems_To_RecordScan" sourceRef="Task_ScanItems" targetRef="Task_RecordScan" />
+    <bpmn:sequenceFlow id="Flow_RecordScan_To_AllItemsScanned" sourceRef="Task_RecordScan" targetRef="Gateway_AllItemsScanned" />
+    <bpmn:sequenceFlow id="Flow_AllItemsScanned_No" name="Нет" sourceRef="Gateway_AllItemsScanned" targetRef="Task_ScanItems" />
+    <bpmn:sequenceFlow id="Flow_AllItemsScanned_Yes" name="Да" sourceRef="Gateway_AllItemsScanned" targetRef="Task_OfferPromos" />
+    <bpmn:sequenceFlow id="Flow_OfferPromos_To_AnnounceTotal" sourceRef="Task_OfferPromos" targetRef="Task_AnnounceTotal" />
+    <bpmn:sequenceFlow id="Flow_AnnounceTotal_To_PaymentMethod" sourceRef="Task_AnnounceTotal" targetRef="Gateway_PaymentMethod" />
+    <bpmn:sequenceFlow id="Flow_PaymentMethod_Card" name="Безнал" sourceRef="Gateway_PaymentMethod" targetRef="Task_InitiateCardPayment" />
+    <bpmn:sequenceFlow id="Flow_PaymentMethod_CashOrOther" name="Наличные/Подарочная/Комбинированно" sourceRef="Gateway_PaymentMethod" targetRef="Task_PayCashOrOther" />
+    <bpmn:sequenceFlow id="Flow_InitiateCard_To_RequestAcquirer" sourceRef="Task_InitiateCardPayment" targetRef="Task_RequestAcquirer" />
+    <bpmn:sequenceFlow id="Flow_RequestAcquirer_To_ConfirmPayment" sourceRef="Task_RequestAcquirer" targetRef="Task_ConfirmPayment" />
+    <bpmn:sequenceFlow id="Flow_ConfirmPayment_To_AcquirerCheck" sourceRef="Task_ConfirmPayment" targetRef="Task_AcquirerCheckAndRespond" />
+    <bpmn:sequenceFlow id="Flow_AcquirerCheck_To_PaymentSuccess" sourceRef="Task_AcquirerCheckAndRespond" targetRef="Gateway_PaymentSuccess" />
+    <bpmn:sequenceFlow id="Flow_PaymentSuccess_Yes" name="Да" sourceRef="Gateway_PaymentSuccess" targetRef="Gateway_Paid" />
+    <bpmn:sequenceFlow id="Flow_PaymentSuccess_No" name="Нет" sourceRef="Gateway_PaymentSuccess" targetRef="EndEvent_Interrupted" />
+    <bpmn:sequenceFlow id="Flow_PayCash_To_ReceiveChange" sourceRef="Task_PayCashOrOther" targetRef="Task_ReceiveCashAndGiveChange" />
+    <bpmn:sequenceFlow id="Flow_ReceiveChange_To_Paid" sourceRef="Task_ReceiveCashAndGiveChange" targetRef="Gateway_Paid" />
+    <bpmn:sequenceFlow id="Flow_Paid_To_PrintReceipt" sourceRef="Gateway_Paid" targetRef="Task_PrintReceipt" />
+    <bpmn:sequenceFlow id="Flow_PrintReceipt_To_SetSaleDonePaid" sourceRef="Task_PrintReceipt" targetRef="Task_SetSaleDonePaid" />
+    <bpmn:sequenceFlow id="Flow_SetSaleDonePaid_To_FreeCashdesk" sourceRef="Task_SetSaleDonePaid" targetRef="Task_FreeCashdesk" />
+    <bpmn:sequenceFlow id="Flow_FreeCashdesk_To_TakeGoodsAndLeave" sourceRef="Task_FreeCashdesk" targetRef="Task_TakeGoodsAndLeave" />
+    <bpmn:sequenceFlow id="Flow_TakeGoodsAndLeave_To_End" sourceRef="Task_TakeGoodsAndLeave" targetRef="EndEvent_Done" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Process_StoreVisit">
+    <bpmndi:BPMNPlane id="BPMNPlane_Process_StoreVisit" bpmnElement="Process_StoreVisit">
+      <bpmndi:BPMNShape id="StartEvent_RealizedNeed_di" bpmnElement="StartEvent_RealizedNeed">
+        <dc:Bounds x="57" y="52" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_GoToStore_di" bpmnElement="Task_GoToStore">
+        <dc:Bounds x="175" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_TakeBasket_di" bpmnElement="Task_TakeBasket">
+        <dc:Bounds x="325" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_PickGoods_di" bpmnElement="Task_PickGoods">
+        <dc:Bounds x="475" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_GoToCash_di" bpmnElement="Task_GoToCash">
+        <dc:Bounds x="625" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_PutOnBelt_di" bpmnElement="Task_PutOnBelt">
+        <dc:Bounds x="775" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ServiceStart_di" bpmnElement="Task_ServiceStart">
+        <dc:Bounds x="925" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_CreateSaleDocument_di" bpmnElement="Task_CreateSaleDocument">
+        <dc:Bounds x="1075" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_ErrorCheck_di" bpmnElement="Gateway_ErrorCheck" isMarkerVisible="true">
+        <dc:Bounds x="1250" y="45" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ScanItems_di" bpmnElement="Task_ScanItems">
+        <dc:Bounds x="1375" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_RecordScan_di" bpmnElement="Task_RecordScan">
+        <dc:Bounds x="1525" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_AllItemsScanned_di" bpmnElement="Gateway_AllItemsScanned" isMarkerVisible="true">
+        <dc:Bounds x="1700" y="45" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_OfferPromos_di" bpmnElement="Task_OfferPromos">
+        <dc:Bounds x="1825" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_AnnounceTotal_di" bpmnElement="Task_AnnounceTotal">
+        <dc:Bounds x="1975" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_PaymentMethod_di" bpmnElement="Gateway_PaymentMethod" isMarkerVisible="true">
+        <dc:Bounds x="2150" y="45" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_InitiateCardPayment_di" bpmnElement="Task_InitiateCardPayment">
+        <dc:Bounds x="2275" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_RequestAcquirer_di" bpmnElement="Task_RequestAcquirer">
+        <dc:Bounds x="2425" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ConfirmPayment_di" bpmnElement="Task_ConfirmPayment">
+        <dc:Bounds x="2575" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_AcquirerCheckAndRespond_di" bpmnElement="Task_AcquirerCheckAndRespond">
+        <dc:Bounds x="2725" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_PaymentSuccess_di" bpmnElement="Gateway_PaymentSuccess" isMarkerVisible="true">
+        <dc:Bounds x="2900" y="45" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Paid_di" bpmnElement="Gateway_Paid" isMarkerVisible="true">
+        <dc:Bounds x="3050" y="45" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_PrintReceipt_di" bpmnElement="Task_PrintReceipt">
+        <dc:Bounds x="3175" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_SetSaleDonePaid_di" bpmnElement="Task_SetSaleDonePaid">
+        <dc:Bounds x="3325" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_FreeCashdesk_di" bpmnElement="Task_FreeCashdesk">
+        <dc:Bounds x="3475" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_TakeGoodsAndLeave_di" bpmnElement="Task_TakeGoodsAndLeave">
+        <dc:Bounds x="3625" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Done_di" bpmnElement="EndEvent_Done">
+        <dc:Bounds x="3807" y="52" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Interrupted_di" bpmnElement="EndEvent_Interrupted">
+        <dc:Bounds x="1407" y="192" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_PayCashOrOther_di" bpmnElement="Task_PayCashOrOther">
+        <dc:Bounds x="2275" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ReceiveCashAndGiveChange_di" bpmnElement="Task_ReceiveCashAndGiveChange">
+        <dc:Bounds x="2425" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_Start_To_GoToStore_di" bpmnElement="Flow_Start_To_GoToStore">
+        <di:waypoint x="93" y="70" />
+        <di:waypoint x="175" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_GoToStore_To_TakeBasket_di" bpmnElement="Flow_GoToStore_To_TakeBasket">
+        <di:waypoint x="275" y="70" />
+        <di:waypoint x="325" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_TakeBasket_To_PickGoods_di" bpmnElement="Flow_TakeBasket_To_PickGoods">
+        <di:waypoint x="425" y="70" />
+        <di:waypoint x="475" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_PickGoods_To_GoToCash_di" bpmnElement="Flow_PickGoods_To_GoToCash">
+        <di:waypoint x="575" y="70" />
+        <di:waypoint x="625" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_GoToCash_To_PutOnBelt_di" bpmnElement="Flow_GoToCash_To_PutOnBelt">
+        <di:waypoint x="725" y="70" />
+        <di:waypoint x="775" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_PutOnBelt_To_ServiceStart_di" bpmnElement="Flow_PutOnBelt_To_ServiceStart">
+        <di:waypoint x="875" y="70" />
+        <di:waypoint x="925" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ServiceStart_To_CreateSaleDocument_di" bpmnElement="Flow_ServiceStart_To_CreateSaleDocument">
+        <di:waypoint x="1025" y="70" />
+        <di:waypoint x="1075" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_CreateSaleDocument_To_ErrorCheck_di" bpmnElement="Flow_CreateSaleDocument_To_ErrorCheck">
+        <di:waypoint x="1175" y="70" />
+        <di:waypoint x="1250" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ErrorCheck_No_di" bpmnElement="Flow_ErrorCheck_No">
+        <di:waypoint x="1300" y="70" />
+        <di:waypoint x="1375" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ErrorCheck_Yes_di" bpmnElement="Flow_ErrorCheck_Yes">
+        <di:waypoint x="1275" y="95" />
+        <di:waypoint x="1275" y="210" />
+        <di:waypoint x="1407" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ScanItems_To_RecordScan_di" bpmnElement="Flow_ScanItems_To_RecordScan">
+        <di:waypoint x="1475" y="70" />
+        <di:waypoint x="1525" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_RecordScan_To_AllItemsScanned_di" bpmnElement="Flow_RecordScan_To_AllItemsScanned">
+        <di:waypoint x="1625" y="70" />
+        <di:waypoint x="1700" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_AllItemsScanned_No_di" bpmnElement="Flow_AllItemsScanned_No">
+        <di:waypoint x="1725" y="95" />
+        <di:waypoint x="1725" y="140" />
+        <di:waypoint x="1425" y="140" />
+        <di:waypoint x="1425" y="110" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_AllItemsScanned_Yes_di" bpmnElement="Flow_AllItemsScanned_Yes">
+        <di:waypoint x="1750" y="70" />
+        <di:waypoint x="1825" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_OfferPromos_To_AnnounceTotal_di" bpmnElement="Flow_OfferPromos_To_AnnounceTotal">
+        <di:waypoint x="1925" y="70" />
+        <di:waypoint x="1975" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_AnnounceTotal_To_PaymentMethod_di" bpmnElement="Flow_AnnounceTotal_To_PaymentMethod">
+        <di:waypoint x="2075" y="70" />
+        <di:waypoint x="2150" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_PaymentMethod_Card_di" bpmnElement="Flow_PaymentMethod_Card">
+        <di:waypoint x="2200" y="70" />
+        <di:waypoint x="2275" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_PaymentMethod_CashOrOther_di" bpmnElement="Flow_PaymentMethod_CashOrOther">
+        <di:waypoint x="2175" y="95" />
+        <di:waypoint x="2175" y="210" />
+        <di:waypoint x="2275" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_InitiateCard_To_RequestAcquirer_di" bpmnElement="Flow_InitiateCard_To_RequestAcquirer">
+        <di:waypoint x="2375" y="70" />
+        <di:waypoint x="2425" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_RequestAcquirer_To_ConfirmPayment_di" bpmnElement="Flow_RequestAcquirer_To_ConfirmPayment">
+        <di:waypoint x="2525" y="70" />
+        <di:waypoint x="2575" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ConfirmPayment_To_AcquirerCheck_di" bpmnElement="Flow_ConfirmPayment_To_AcquirerCheck">
+        <di:waypoint x="2675" y="70" />
+        <di:waypoint x="2725" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_AcquirerCheck_To_PaymentSuccess_di" bpmnElement="Flow_AcquirerCheck_To_PaymentSuccess">
+        <di:waypoint x="2825" y="70" />
+        <di:waypoint x="2900" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_PaymentSuccess_Yes_di" bpmnElement="Flow_PaymentSuccess_Yes">
+        <di:waypoint x="2950" y="70" />
+        <di:waypoint x="3050" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_PaymentSuccess_No_di" bpmnElement="Flow_PaymentSuccess_No">
+        <di:waypoint x="2925" y="45" />
+        <di:waypoint x="2925" y="0" />
+        <di:waypoint x="1425" y="0" />
+        <di:waypoint x="1425" y="192" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Paid_To_PrintReceipt_di" bpmnElement="Flow_Paid_To_PrintReceipt">
+        <di:waypoint x="3100" y="70" />
+        <di:waypoint x="3175" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_PrintReceipt_To_SetSaleDonePaid_di" bpmnElement="Flow_PrintReceipt_To_SetSaleDonePaid">
+        <di:waypoint x="3275" y="70" />
+        <di:waypoint x="3325" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_SetSaleDonePaid_To_FreeCashdesk_di" bpmnElement="Flow_SetSaleDonePaid_To_FreeCashdesk">
+        <di:waypoint x="3425" y="70" />
+        <di:waypoint x="3475" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_FreeCashdesk_To_TakeGoodsAndLeave_di" bpmnElement="Flow_FreeCashdesk_To_TakeGoodsAndLeave">
+        <di:waypoint x="3575" y="70" />
+        <di:waypoint x="3625" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_TakeGoodsAndLeave_To_End_di" bpmnElement="Flow_TakeGoodsAndLeave_To_End">
+        <di:waypoint x="3725" y="70" />
+        <di:waypoint x="3807" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_PayCash_To_ReceiveChange_di" bpmnElement="Flow_PayCash_To_ReceiveChange">
+        <di:waypoint x="2375" y="210" />
+        <di:waypoint x="2425" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ReceiveChange_To_Paid_di" bpmnElement="Flow_ReceiveChange_To_Paid">
+        <di:waypoint x="2525" y="210" />
+        <di:waypoint x="3075" y="210" />
+        <di:waypoint x="3075" y="95" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
