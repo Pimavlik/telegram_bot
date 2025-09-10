@@ -309,6 +309,445 @@
     <bpmn:sequenceFlow id="aq4a" sourceRef="Task_Acq_Approve" targetRef="End_Acq"/>
     <bpmn:sequenceFlow id="aq4b" sourceRef="Task_Acq_Decline" targetRef="End_Acq"/>
   </bpmn:process>
+  
+  <!-- BPMN DIAGRAM (with shapes and edges) -->
+  <bpmndi:BPMNDiagram id="Diagram_Shopping">
+    <bpmndi:BPMNPlane id="Plane_Shopping" bpmnElement="Collab_Shopping">
+      <!-- Participants (Pools) -->
+      <bpmndi:BPMNShape id="DI_Pool_Customer" bpmnElement="Pool_Customer">
+        <dc:Bounds x="10" y="10" width="1760" height="220"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Pool_Store" bpmnElement="Pool_Store">
+        <dc:Bounds x="10" y="240" width="1760" height="460"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Pool_Acq" bpmnElement="Pool_Acquirer">
+        <dc:Bounds x="10" y="710" width="1760" height="200"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Lanes -->
+      <bpmndi:BPMNShape id="DI_Lane_Cashier" bpmnElement="Lane_Cashier">
+        <dc:Bounds x="10" y="270" width="1760" height="230"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Lane_IS" bpmnElement="Lane_IS">
+        <dc:Bounds x="10" y="500" width="1760" height="200"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Customer nodes -->
+      <bpmndi:BPMNShape id="DI_Start_NeedGroceries" bpmnElement="Start_NeedGroceries">
+        <dc:Bounds x="40" y="70" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_GoToStore" bpmnElement="Task_GoToStore">
+        <dc:Bounds x="100" y="55" width="140" height="66"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_TakeBasket" bpmnElement="Task_TakeBasket">
+        <dc:Bounds x="260" y="55" width="180" height="66"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_SelectProducts" bpmnElement="Task_SelectProducts">
+        <dc:Bounds x="460" y="55" width="180" height="66"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_WaitQueue" bpmnElement="Task_WaitQueue">
+        <dc:Bounds x="660" y="55" width="180" height="66"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_AwaitDivider" bpmnElement="Task_AwaitDivider">
+        <dc:Bounds x="860" y="70" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_PutItemsOnBelt" bpmnElement="Task_PutItemsOnBelt">
+        <dc:Bounds x="920" y="55" width="160" height="66"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_DecidePayment" bpmnElement="Task_DecidePayment">
+        <dc:Bounds x="1095" y="65" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_WaitApproval" bpmnElement="Task_WaitApproval">
+        <dc:Bounds x="1165" y="70" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_Customer_HandCash" bpmnElement="Task_Customer_HandCash">
+        <dc:Bounds x="1160" y="120" width="160" height="60"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Catch_Customer_Change" bpmnElement="Catch_Customer_Change">
+        <dc:Bounds x="1330" y="132" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_End_TakeGoods" bpmnElement="End_TakeGoods">
+        <dc:Bounds x="1260" y="70" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Cashier nodes -->
+      <bpmndi:BPMNShape id="DI_Start_Cashier_Service" bpmnElement="Start_Cashier_Service">
+        <dc:Bounds x="60" y="320" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_CreateSale" bpmnElement="Task_CreateSale">
+        <dc:Bounds x="120" y="305" width="160" height="66"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Sub_ScanItems" bpmnElement="Sub_ScanItems" isExpanded="true">
+        <dc:Bounds x="300" y="295" width="260" height="120"/>
+      </bpmndi:BPMNShape>
+      <!-- Inside subprocess (expanded) -->
+      <bpmndi:BPMNShape id="DI_SP_Start_Scan" bpmnElement="SP_Start_Scan">
+        <dc:Bounds x="315" y="335" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_ScanItem" bpmnElement="Task_ScanItem">
+        <dc:Bounds x="360" y="325" width="120" height="56"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Catch_Cashier_Persisted" bpmnElement="Catch_Cashier_Persisted">
+        <dc:Bounds x="490" y="335" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_SP_End_Scan" bpmnElement="SP_End_Scan">
+        <dc:Bounds x="540" y="335" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="DI_Task_OfferPromos" bpmnElement="Task_OfferPromos">
+        <dc:Bounds x="580" y="305" width="180" height="66"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_GW_PromoAccepted" bpmnElement="GW_PromoAccepted">
+        <dc:Bounds x="770" y="320" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_AnnounceTotal" bpmnElement="Task_AnnounceTotal">
+        <dc:Bounds x="840" y="305" width="200" height="66"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Gateway_PaymentChoice" bpmnElement="Gateway_PaymentChoice">
+        <dc:Bounds x="1050" y="320" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_InitiateCashless" bpmnElement="Task_InitiateCashless">
+        <dc:Bounds x="1120" y="295" width="160" height="66"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Catch_Cashier_Cash" bpmnElement="Catch_Cashier_Cash">
+        <dc:Bounds x="1120" y="380" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_Cashier_GiveChange" bpmnElement="Task_Cashier_GiveChange">
+        <dc:Bounds x="1180" y="365" width="180" height="66"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Catch_Cashier_Approved" bpmnElement="Catch_Cashier_Approved">
+        <dc:Bounds x="1290" y="305" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Catch_Cashier_Declined" bpmnElement="Catch_Cashier_Declined">
+        <dc:Bounds x="1290" y="350" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_GW_CashlessResult" bpmnElement="GW_CashlessResult">
+        <dc:Bounds x="1345" y="325" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Sub_MixedPayment" bpmnElement="Sub_MixedPayment">
+        <dc:Bounds x="1120" y="440" width="300" height="110"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_PrintReceipt" bpmnElement="Task_PrintReceipt">
+        <dc:Bounds x="1410" y="305" width="160" height="66"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_End_FreeCheckout" bpmnElement="End_FreeCheckout">
+        <dc:Bounds x="1580" y="320" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_End_Interrupted" bpmnElement="End_Interrupted">
+        <dc:Bounds x="220" y="380" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+
+      <!-- IS nodes -->
+      <bpmndi:BPMNShape id="DI_Start_IS_CreateSale" bpmnElement="Start_IS_CreateSale">
+        <dc:Bounds x="100" y="540" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_IS_RegisterSale" bpmnElement="Task_IS_RegisterSale">
+        <dc:Bounds x="150" y="525" width="190" height="66"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Catch_IS_ScanItem" bpmnElement="Catch_IS_ScanItem">
+        <dc:Bounds x="355" y="540" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_IS_PersistItem" bpmnElement="Task_IS_PersistItem">
+        <dc:Bounds x="405" y="525" width="210" height="66"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Throw_IS_Persisted" bpmnElement="Throw_IS_Persisted">
+        <dc:Bounds x="625" y="540" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_IS_SendPaymentReq" bpmnElement="Task_IS_SendPaymentReq">
+        <dc:Bounds x="680" y="525" width="240" height="66"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Catch_IS_PaymentApproved" bpmnElement="Catch_IS_PaymentApproved">
+        <dc:Bounds x="940" y="525" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Catch_IS_PaymentDeclined" bpmnElement="Catch_IS_PaymentDeclined">
+        <dc:Bounds x="940" y="565" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Throw_IS_PaymentApproved" bpmnElement="Throw_IS_PaymentApproved">
+        <dc:Bounds x="985" y="525" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Throw_IS_PaymentDeclined" bpmnElement="Throw_IS_PaymentDeclined">
+        <dc:Bounds x="985" y="565" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Acquirer nodes -->
+      <bpmndi:BPMNShape id="DI_Start_Acq_Authorize" bpmnElement="Start_Acq_Authorize">
+        <dc:Bounds x="120" y="760" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_Acq_CheckBalance" bpmnElement="Task_Acq_CheckBalance">
+        <dc:Bounds x="170" y="745" width="230" height="66"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_GW_Acq_Result" bpmnElement="GW_Acq_Result">
+        <dc:Bounds x="420" y="760" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_Acq_Approve" bpmnElement="Task_Acq_Approve">
+        <dc:Bounds x="480" y="730" width="180" height="60"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_Acq_Decline" bpmnElement="Task_Acq_Decline">
+        <dc:Bounds x="480" y="800" width="180" height="60"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_End_Acq" bpmnElement="End_Acq">
+        <dc:Bounds x="670" y="760" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Sequence Flow Edges: Customer -->
+      <bpmndi:BPMNEdge id="DI_flow1" bpmnElement="flow1">
+        <di:waypoint x="76" y="88"/>
+        <di:waypoint x="100" y="88"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_flow2" bpmnElement="flow2">
+        <di:waypoint x="240" y="88"/>
+        <di:waypoint x="260" y="88"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_flow3" bpmnElement="flow3">
+        <di:waypoint x="440" y="88"/>
+        <di:waypoint x="460" y="88"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_flow4" bpmnElement="flow4">
+        <di:waypoint x="640" y="88"/>
+        <di:waypoint x="660" y="88"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_flow5" bpmnElement="flow5">
+        <di:waypoint x="840" y="88"/>
+        <di:waypoint x="860" y="88"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_flow6" bpmnElement="flow6">
+        <di:waypoint x="896" y="88"/>
+        <di:waypoint x="920" y="88"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_flow7" bpmnElement="flow7">
+        <di:waypoint x="1080" y="88"/>
+        <di:waypoint x="1095" y="90"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_flow8_cashless" bpmnElement="flow8_cashless">
+        <di:waypoint x="1120" y="90"/>
+        <di:waypoint x="1183" y="88"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_flow8_cash" bpmnElement="flow8_cash">
+        <di:waypoint x="1120" y="90"/>
+        <di:waypoint x="1160" y="150"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_flow8_mixed" bpmnElement="flow8_mixed">
+        <di:waypoint x="1120" y="90"/>
+        <di:waypoint x="1183" y="88"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_flow9" bpmnElement="flow9">
+        <di:waypoint x="1201" y="88"/>
+        <di:waypoint x="1260" y="88"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_flow10" bpmnElement="flow10">
+        <di:waypoint x="1320" y="150"/>
+        <di:waypoint x="1330" y="150"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_flow11" bpmnElement="flow11">
+        <di:waypoint x="1366" y="150"/>
+        <di:waypoint x="1278" y="88"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- Sequence Flow Edges: Store (top-level) -->
+      <bpmndi:BPMNEdge id="DI_s1" bpmnElement="s1">
+        <di:waypoint x="96" y="338"/>
+        <di:waypoint x="120" y="338"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s2" bpmnElement="s2">
+        <di:waypoint x="280" y="338"/>
+        <di:waypoint x="300" y="338"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s3" bpmnElement="s3">
+        <di:waypoint x="560" y="338"/>
+        <di:waypoint x="580" y="338"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s4a" bpmnElement="s4a">
+        <di:waypoint x="760" y="338"/>
+        <di:waypoint x="770" y="345"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s4b" bpmnElement="s4b">
+        <di:waypoint x="795" y="345"/>
+        <di:waypoint x="430" y="345"/>
+        <di:waypoint x="430" y="338"/>
+        <di:waypoint x="300" y="338"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s4c" bpmnElement="s4c">
+        <di:waypoint x="820" y="345"/>
+        <di:waypoint x="840" y="338"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s5d" bpmnElement="s5d">
+        <di:waypoint x="1040" y="338"/>
+        <di:waypoint x="1050" y="345"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s5a" bpmnElement="s5a">
+        <di:waypoint x="1100" y="345"/>
+        <di:waypoint x="1120" y="328"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s5b" bpmnElement="s5b">
+        <di:waypoint x="1075" y="370"/>
+        <di:waypoint x="1120" y="398"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s5c" bpmnElement="s5c">
+        <di:waypoint x="1075" y="370"/>
+        <di:waypoint x="1120" y="495"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s6" bpmnElement="s6">
+        <di:waypoint x="1280" y="328"/>
+        <di:waypoint x="680" y="558"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s7a" bpmnElement="s7a">
+        <di:waypoint x="1308" y="323"/>
+        <di:waypoint x="1345" y="350"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s7b" bpmnElement="s7b">
+        <di:waypoint x="1308" y="368"/>
+        <di:waypoint x="1345" y="350"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s7c" bpmnElement="s7c">
+        <di:waypoint x="1370" y="350"/>
+        <di:waypoint x="1410" y="338"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s7d" bpmnElement="s7d">
+        <di:waypoint x="1370" y="350"/>
+        <di:waypoint x="1075" y="345"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s8a" bpmnElement="s8a">
+        <di:waypoint x="1156" y="398"/>
+        <di:waypoint x="1180" y="398"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s8b" bpmnElement="s8b">
+        <di:waypoint x="1360" y="398"/>
+        <di:waypoint x="1410" y="338"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s9" bpmnElement="s9">
+        <di:waypoint x="1420" y="495"/>
+        <di:waypoint x="1410" y="338"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s10" bpmnElement="s10">
+        <di:waypoint x="1570" y="338"/>
+        <di:waypoint x="1598" y="338"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- Subprocess internal flows -->
+      <bpmndi:BPMNEdge id="DI_ss1" bpmnElement="ss1">
+        <di:waypoint x="351" y="353"/>
+        <di:waypoint x="360" y="353"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_ss2" bpmnElement="ss2">
+        <di:waypoint x="480" y="353"/>
+        <di:waypoint x="490" y="353"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_ss3" bpmnElement="ss3">
+        <di:waypoint x="526" y="353"/>
+        <di:waypoint x="540" y="353"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- IS sequence flows -->
+      <bpmndi:BPMNEdge id="DI_is1" bpmnElement="is1">
+        <di:waypoint x="136" y="558"/>
+        <di:waypoint x="150" y="558"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_is2" bpmnElement="is2">
+        <di:waypoint x="340" y="558"/>
+        <di:waypoint x="355" y="558"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_is3" bpmnElement="is3">
+        <di:waypoint x="391" y="558"/>
+        <di:waypoint x="405" y="558"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_is4" bpmnElement="is4">
+        <di:waypoint x="615" y="558"/>
+        <di:waypoint x="625" y="558"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_is5" bpmnElement="is5">
+        <di:waypoint x="661" y="558"/>
+        <di:waypoint x="355" y="558"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_is6" bpmnElement="is6">
+        <di:waypoint x="920" y="558"/>
+        <di:waypoint x="940" y="543"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_is6b" bpmnElement="is6b">
+        <di:waypoint x="920" y="558"/>
+        <di:waypoint x="940" y="583"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_is7" bpmnElement="is7">
+        <di:waypoint x="976" y="543"/>
+        <di:waypoint x="985" y="543"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_is8" bpmnElement="is8">
+        <di:waypoint x="976" y="583"/>
+        <di:waypoint x="985" y="583"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- Acquirer sequence flows -->
+      <bpmndi:BPMNEdge id="DI_aq1" bpmnElement="aq1">
+        <di:waypoint x="156" y="778"/>
+        <di:waypoint x="170" y="778"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_aq2" bpmnElement="aq2">
+        <di:waypoint x="400" y="778"/>
+        <di:waypoint x="420" y="785"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_aq3a" bpmnElement="aq3a">
+        <di:waypoint x="445" y="785"/>
+        <di:waypoint x="480" y="760"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_aq3b" bpmnElement="aq3b">
+        <di:waypoint x="445" y="785"/>
+        <di:waypoint x="480" y="830"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_aq4a" bpmnElement="aq4a">
+        <di:waypoint x="660" y="760"/>
+        <di:waypoint x="688" y="778"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_aq4b" bpmnElement="aq4b">
+        <di:waypoint x="660" y="830"/>
+        <di:waypoint x="688" y="778"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- Message Flow Edges -->
+      <bpmndi:BPMNEdge id="DI_mf_ItemsOnBelt" bpmnElement="mf_ItemsOnBelt">
+        <di:waypoint x="1080" y="88"/>
+        <di:waypoint x="78" y="338"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_mf_CreateSale" bpmnElement="mf_CreateSale">
+        <di:waypoint x="280" y="338"/>
+        <di:waypoint x="118" y="558"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_mf_ScanItem" bpmnElement="mf_ScanItem">
+        <di:waypoint x="480" y="353"/>
+        <di:waypoint x="373" y="558"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_mf_PersistAck" bpmnElement="mf_PersistAck">
+        <di:waypoint x="643" y="558"/>
+        <di:waypoint x="508" y="353"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_mf_PaymentRequest" bpmnElement="mf_PaymentRequest">
+        <di:waypoint x="920" y="558"/>
+        <di:waypoint x="138" y="778"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_mf_PaymentApproved" bpmnElement="mf_PaymentApproved">
+        <di:waypoint x="570" y="760"/>
+        <di:waypoint x="958" y="543"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_mf_PaymentDeclined" bpmnElement="mf_PaymentDeclined">
+        <di:waypoint x="570" y="830"/>
+        <di:waypoint x="958" y="583"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_mf_IS_to_Cashier_Approved" bpmnElement="mf_IS_to_Cashier_Approved">
+        <di:waypoint x="1003" y="543"/>
+        <di:waypoint x="1308" y="323"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_mf_IS_to_Cashier_Declined" bpmnElement="mf_IS_to_Cashier_Declined">
+        <di:waypoint x="1003" y="583"/>
+        <di:waypoint x="1308" y="368"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_mf_CashToCashier" bpmnElement="mf_CashToCashier">
+        <di:waypoint x="1240" y="150"/>
+        <di:waypoint x="1138" y="398"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_mf_ChangeToCustomer" bpmnElement="mf_ChangeToCustomer">
+        <di:waypoint x="1360" y="398"/>
+        <di:waypoint x="1348" y="150"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
 </bpmn:definitions>
 
 <?xml version="1.0" encoding="UTF-8"?>
