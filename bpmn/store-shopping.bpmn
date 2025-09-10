@@ -1,0 +1,1057 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_Shopping" targetNamespace="https://example.com/bpmn/shopping">
+  <!-- Messages and Signals -->
+  <bpmn:message id="msg_ItemsOnBelt" name="Items on belt"/>
+  <bpmn:message id="msg_CreateSale" name="Create Sale Document"/>
+  <bpmn:message id="msg_ScanItem" name="Scan Item"/>
+  <bpmn:message id="msg_PersistItem" name="Persist Item Transactionally"/>
+  <bpmn:message id="msg_PaymentRequest" name="Payment Authorization Request"/>
+  <bpmn:message id="msg_PaymentApproved" name="Payment Approved"/>
+  <bpmn:message id="msg_PaymentDeclined" name="Payment Declined"/>
+  <bpmn:message id="msg_CashHanded" name="Cash Handed Over"/>
+  <bpmn:message id="msg_ChangeGiven" name="Change Given"/>
+  <bpmn:signal id="sig_FreeCheckout" name="Free Checkout"/>
+
+  <!-- Collaboration with participants -->
+  <bpmn:collaboration id="Collab_Shopping">
+    <bpmn:participant id="Pool_Customer" name="Покупатель" processRef="Process_Customer"/>
+    <bpmn:participant id="Pool_Store" name="Магазин" processRef="Process_Store"/>
+    <bpmn:participant id="Pool_Acquirer" name="Банк-эквайер" processRef="Process_Acquirer"/>
+
+    <!-- Message Flows (declared here; elements referenced inside processes) -->
+    <bpmn:messageFlow id="mf_ItemsOnBelt" name="Items on belt" sourceRef="Task_PutItemsOnBelt" targetRef="Start_Cashier_Service" messageRef="msg_ItemsOnBelt"/>
+
+    <!-- Cashier -> IS: Create Sale -->
+    <bpmn:messageFlow id="mf_CreateSale" name="Create Sale" sourceRef="Task_CreateSale" targetRef="Start_IS_CreateSale" messageRef="msg_CreateSale"/>
+
+    <!-- Cashier -> IS: Scan Item; IS -> Cashier: Persist Ack -->
+    <bpmn:messageFlow id="mf_ScanItem" name="Scan Item" sourceRef="Task_ScanItem" targetRef="Catch_IS_ScanItem" messageRef="msg_ScanItem"/>
+    <bpmn:messageFlow id="mf_PersistAck" name="Persisted" sourceRef="Throw_IS_Persisted" targetRef="Catch_Cashier_Persisted" messageRef="msg_PersistItem"/>
+
+    <!-- Noncash: Store IS <-> Acquirer -->
+    <bpmn:messageFlow id="mf_PaymentRequest" name="Payment Request" sourceRef="Task_IS_SendPaymentReq" targetRef="Start_Acq_Authorize" messageRef="msg_PaymentRequest"/>
+    <bpmn:messageFlow id="mf_PaymentApproved" name="Approved" sourceRef="Task_Acq_Approve" targetRef="Catch_IS_PaymentApproved" messageRef="msg_PaymentApproved"/>
+    <bpmn:messageFlow id="mf_PaymentDeclined" name="Declined" sourceRef="Task_Acq_Decline" targetRef="Catch_IS_PaymentDeclined" messageRef="msg_PaymentDeclined"/>
+
+    <!-- IS -> Cashier: authorization result -->
+    <bpmn:messageFlow id="mf_IS_to_Cashier_Approved" name="Approved" sourceRef="Throw_IS_PaymentApproved" targetRef="Catch_Cashier_Approved" messageRef="msg_PaymentApproved"/>
+    <bpmn:messageFlow id="mf_IS_to_Cashier_Declined" name="Declined" sourceRef="Throw_IS_PaymentDeclined" targetRef="Catch_Cashier_Declined" messageRef="msg_PaymentDeclined"/>
+
+    <!-- Mixed: IS -> Cashier events inside subprocess -->
+    <bpmn:messageFlow id="mf_IS_to_Mix_Approved" name="Approved" sourceRef="Throw_IS_PaymentApproved" targetRef="SP_Mix_Approved" messageRef="msg_PaymentApproved"/>
+    <bpmn:messageFlow id="mf_IS_to_Mix_Declined" name="Declined" sourceRef="Throw_IS_PaymentDeclined" targetRef="SP_Mix_Declined" messageRef="msg_PaymentDeclined"/>
+
+    <!-- Cash: Customer -> Cashier and back for change -->
+    <bpmn:messageFlow id="mf_CashToCashier" name="Hand Cash" sourceRef="Task_Customer_HandCash" targetRef="Catch_Cashier_Cash" messageRef="msg_CashHanded"/>
+    <bpmn:messageFlow id="mf_ChangeToCustomer" name="Give Change" sourceRef="Task_Cashier_GiveChange" targetRef="Catch_Customer_Change" messageRef="msg_ChangeGiven"/>
+  </bpmn:collaboration>
+
+  <!-- Customer process -->
+  <bpmn:process id="Process_Customer" name="Покупатель" isExecutable="false">
+    <bpmn:startEvent id="Start_NeedGroceries" name="Продукты закончились"/>
+    <bpmn:sequenceFlow id="flow1" sourceRef="Start_NeedGroceries" targetRef="Task_GoToStore"/>
+
+    <bpmn:userTask id="Task_GoToStore" name="Отправиться в магазин"/>
+    <bpmn:sequenceFlow id="flow2" sourceRef="Task_GoToStore" targetRef="Task_TakeBasket"/>
+
+    <bpmn:userTask id="Task_TakeBasket" name="Взять корзинку и пройти в зал"/>
+    <bpmn:sequenceFlow id="flow3" sourceRef="Task_TakeBasket" targetRef="Task_SelectProducts"/>
+
+    <bpmn:subProcess id="Task_SelectProducts" name="Подбор товаров (по списку)">
+      <bpmn:multiInstanceLoopCharacteristics isSequential="false"/>
+      <bpmn:startEvent id="SP_Start_Select"/>
+      <bpmn:userTask id="SP_Task_PickItem" name="Выбрать товар"/>
+      <bpmn:endEvent id="SP_End_Select"/>
+      <bpmn:sequenceFlow id="sp_f1" sourceRef="SP_Start_Select" targetRef="SP_Task_PickItem"/>
+      <bpmn:sequenceFlow id="sp_f2" sourceRef="SP_Task_PickItem" targetRef="SP_End_Select"/>
+    </bpmn:subProcess>
+    <bpmn:sequenceFlow id="flow4" sourceRef="Task_SelectProducts" targetRef="Task_WaitQueue"/>
+
+    <bpmn:userTask id="Task_WaitQueue" name="Ждать очереди в зоне касс"/>
+    <bpmn:sequenceFlow id="flow5" sourceRef="Task_WaitQueue" targetRef="Task_AwaitDivider"/>
+
+    <bpmn:intermediateCatchEvent id="Task_AwaitDivider" name="Табличка на ленте: закончено">
+      <bpmn:timerEventDefinition/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="flow6" sourceRef="Task_AwaitDivider" targetRef="Task_PutItemsOnBelt"/>
+
+    <bpmn:sendTask id="Task_PutItemsOnBelt" name="Выкладывать товары на ленту" messageRef="msg_ItemsOnBelt"/>
+    <bpmn:sequenceFlow id="flow7" sourceRef="Task_PutItemsOnBelt" targetRef="Task_DecidePayment"/>
+
+    <!-- Payment interaction from customer's side -->
+    <bpmn:exclusiveGateway id="Task_DecidePayment" name="Выбор способа оплаты"/>
+    <bpmn:sequenceFlow id="flow8_cashless" sourceRef="Task_DecidePayment" targetRef="Task_WaitApproval" name="Безнал"/>
+    <bpmn:sequenceFlow id="flow8_cash" sourceRef="Task_DecidePayment" targetRef="Task_Customer_HandCash" name="Наличные"/>
+    <bpmn:sequenceFlow id="flow8_mixed" sourceRef="Task_DecidePayment" targetRef="Task_WaitApproval" name="Смешанная"/>
+
+    <bpmn:intermediateCatchEvent id="Task_WaitApproval" name="Ждать подтверждения оплаты">
+      <bpmn:messageEventDefinition messageRef="msg_PaymentApproved"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="flow9" sourceRef="Task_WaitApproval" targetRef="End_TakeGoods"/>
+
+    <bpmn:sendTask id="Task_Customer_HandCash" name="Передать наличные" messageRef="msg_CashHanded"/>
+    <bpmn:sequenceFlow id="flow10" sourceRef="Task_Customer_HandCash" targetRef="Catch_Customer_Change"/>
+
+    <bpmn:intermediateCatchEvent id="Catch_Customer_Change" name="Получить сдачу (при необходимости)">
+      <bpmn:messageEventDefinition messageRef="msg_ChangeGiven"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="flow11" sourceRef="Catch_Customer_Change" targetRef="End_TakeGoods"/>
+
+    <bpmn:endEvent id="End_TakeGoods" name="Забрать товары и уйти домой">
+      <bpmn:terminateEventDefinition/>
+    </bpmn:endEvent>
+  </bpmn:process>
+
+  <!-- Store (Cashier + IS) process -->
+  <bpmn:process id="Process_Store" name="Магазин" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_Store">
+      <bpmn:lane id="Lane_Cashier" name="Кассир">
+        <bpmn:flowNodeRef>Start_Cashier_Service</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_CreateSale</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Sub_ScanItems</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_OfferPromos</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_PromoAccepted</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_AnnounceTotal</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_PaymentChoice</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_InitiateCashless</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Catch_Cashier_Approved</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Catch_Cashier_Declined</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Catch_Cashier_Persisted</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ScanItem</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Catch_Cashier_Cash</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Cashier_GiveChange</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_PrintReceipt</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_FreeCheckout</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Interrupted</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_IS" name="ИС Магазина">
+        <bpmn:flowNodeRef>Start_IS_CreateSale</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_IS_RegisterSale</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Catch_IS_ScanItem</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_IS_PersistItem</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Throw_IS_Persisted</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_IS_SendPaymentReq</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Catch_IS_PaymentApproved</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Catch_IS_PaymentDeclined</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Throw_IS_PaymentApproved</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Throw_IS_PaymentDeclined</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+
+    <!-- Cashier: start when items on belt -->
+    <bpmn:startEvent id="Start_Cashier_Service" name="Начать обслуживание">
+      <bpmn:messageEventDefinition messageRef="msg_ItemsOnBelt"/>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="s1" sourceRef="Start_Cashier_Service" targetRef="Task_CreateSale"/>
+
+    <bpmn:sendTask id="Task_CreateSale" name="Создать ЭД 'продажа'" messageRef="msg_CreateSale"/>
+    <bpmn:boundaryEvent id="BE_CreateSale_Error" name="Ошибка создания" attachedToRef="Task_CreateSale" cancelActivity="true">
+      <bpmn:errorEventDefinition/>
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="s1_err" sourceRef="BE_CreateSale_Error" targetRef="End_Interrupted"/>
+    <bpmn:sequenceFlow id="s2" sourceRef="Task_CreateSale" targetRef="Sub_ScanItems"/>
+
+    <!-- Scanning loop with transactional persistence ack from IS -->
+    <bpmn:subProcess id="Sub_ScanItems" name="Пробить все товары">
+      <bpmn:standardLoopCharacteristics testBefore="true">
+        <bpmn:loopCondition xsi:type="bpmn:tFormalExpression">${hasMoreItems}</bpmn:loopCondition>
+      </bpmn:standardLoopCharacteristics>
+
+      <bpmn:startEvent id="SP_Start_Scan"/>
+      <bpmn:sequenceFlow id="ss1" sourceRef="SP_Start_Scan" targetRef="Task_ScanItem"/>
+
+      <bpmn:sendTask id="Task_ScanItem" name="Пробить товар" messageRef="msg_ScanItem"/>
+      <bpmn:intermediateCatchEvent id="Catch_Cashier_Persisted" name="Сохранено (транзакционно)">
+        <bpmn:messageEventDefinition messageRef="msg_PersistItem"/>
+      </bpmn:intermediateCatchEvent>
+      <bpmn:sequenceFlow id="ss2" sourceRef="Task_ScanItem" targetRef="Catch_Cashier_Persisted"/>
+      <bpmn:endEvent id="SP_End_Scan"/>
+      <bpmn:sequenceFlow id="ss3" sourceRef="Catch_Cashier_Persisted" targetRef="SP_End_Scan"/>
+    </bpmn:subProcess>
+    <bpmn:sequenceFlow id="s3" sourceRef="Sub_ScanItems" targetRef="Task_OfferPromos"/>
+
+    <bpmn:userTask id="Task_OfferPromos" name="Предложить акции и пакет"/>
+    <bpmn:exclusiveGateway id="GW_PromoAccepted" name="Согласен?"/>
+    <bpmn:sequenceFlow id="s4a" sourceRef="Task_OfferPromos" targetRef="GW_PromoAccepted"/>
+    <bpmn:sequenceFlow id="s4b" sourceRef="GW_PromoAccepted" targetRef="Sub_ScanItems" name="Да"/>
+    <bpmn:sequenceFlow id="s4c" sourceRef="GW_PromoAccepted" targetRef="Task_AnnounceTotal" name="Нет"/>
+
+    <bpmn:userTask id="Task_AnnounceTotal" name="Озвучить сумму и спросить способ"/>
+    <bpmn:exclusiveGateway id="Gateway_PaymentChoice" name="Способ оплаты"/>
+    <bpmn:sequenceFlow id="s5d" sourceRef="Task_AnnounceTotal" targetRef="Gateway_PaymentChoice"/>
+    <bpmn:sequenceFlow id="s5a" sourceRef="Gateway_PaymentChoice" targetRef="Task_InitiateCashless" name="Безнал"/>
+    <bpmn:sequenceFlow id="s5b" sourceRef="Gateway_PaymentChoice" targetRef="Catch_Cashier_Cash" name="Наличные"/>
+    <bpmn:sequenceFlow id="s5c" sourceRef="Gateway_PaymentChoice" targetRef="Sub_MixedPayment" name="Смешанная"/>
+
+    <!-- Cashless path -->
+    <bpmn:userTask id="Task_InitiateCashless" name="Инициировать безнал"/>
+    <bpmn:sequenceFlow id="s6" sourceRef="Task_InitiateCashless" targetRef="Task_IS_SendPaymentReq"/>
+
+    <bpmn:intermediateCatchEvent id="Catch_Cashier_Approved" name="Оплата подтверждена">
+      <bpmn:messageEventDefinition messageRef="msg_PaymentApproved"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="Catch_Cashier_Declined" name="Отказ/таймаут">
+      <bpmn:messageEventDefinition messageRef="msg_PaymentDeclined"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:exclusiveGateway id="GW_CashlessResult" name="Результат безнала"/>
+    <bpmn:sequenceFlow id="s7a" sourceRef="Catch_Cashier_Approved" targetRef="GW_CashlessResult"/>
+    <bpmn:sequenceFlow id="s7b" sourceRef="Catch_Cashier_Declined" targetRef="GW_CashlessResult"/>
+    <bpmn:sequenceFlow id="s7c" sourceRef="GW_CashlessResult" targetRef="Task_PrintReceipt" name="Успешно"/>
+    <bpmn:sequenceFlow id="s7d" sourceRef="GW_CashlessResult" targetRef="Gateway_PaymentChoice" name="Неуспешно"/>
+
+    <!-- Cash path -->
+    <bpmn:intermediateCatchEvent id="Catch_Cashier_Cash" name="Получить наличные">
+      <bpmn:messageEventDefinition messageRef="msg_CashHanded"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:userTask id="Task_Cashier_GiveChange" name="Выдать сдачу (если нужно)"/>
+    <bpmn:sequenceFlow id="s8a" sourceRef="Catch_Cashier_Cash" targetRef="Task_Cashier_GiveChange"/>
+    <bpmn:sequenceFlow id="s8b" sourceRef="Task_Cashier_GiveChange" targetRef="Task_PrintReceipt"/>
+
+    <!-- Mixed payment as loop collecting partial payments -->
+    <bpmn:subProcess id="Sub_MixedPayment" name="Смешанная оплата (повторять, пока сумма &gt; 0)">
+      <bpmn:standardLoopCharacteristics testBefore="true">
+        <bpmn:loopCondition xsi:type="bpmn:tFormalExpression">${remainingAmount &gt; 0}</bpmn:loopCondition>
+      </bpmn:standardLoopCharacteristics>
+
+      <bpmn:startEvent id="SP_Mix_Start"/>
+      <bpmn:exclusiveGateway id="GW_Mix_Choice" name="Выбрать платеж"/>
+      <bpmn:intermediateCatchEvent id="SP_Mix_Cash" name="Получить наличные">
+        <bpmn:messageEventDefinition messageRef="msg_CashHanded"/>
+      </bpmn:intermediateCatchEvent>
+      <bpmn:userTask id="SP_Mix_GiveChange" name="Выдать сдачу (если нужно)"/>
+      <bpmn:userTask id="SP_Mix_Cashless" name="Инициировать безнал на часть суммы"/>
+      <bpmn:intermediateCatchEvent id="SP_Mix_Approved" name="Часть оплачена">
+        <bpmn:messageEventDefinition messageRef="msg_PaymentApproved"/>
+      </bpmn:intermediateCatchEvent>
+      <bpmn:intermediateCatchEvent id="SP_Mix_Declined" name="Отказ/таймаут">
+        <bpmn:messageEventDefinition messageRef="msg_PaymentDeclined"/>
+      </bpmn:intermediateCatchEvent>
+      <bpmn:endEvent id="SP_Mix_End"/>
+
+      <bpmn:sequenceFlow id="mx1" sourceRef="SP_Mix_Start" targetRef="GW_Mix_Choice"/>
+      <bpmn:sequenceFlow id="mx2" sourceRef="GW_Mix_Choice" targetRef="SP_Mix_Cash" name="Наличные"/>
+      <bpmn:sequenceFlow id="mx3" sourceRef="SP_Mix_Cash" targetRef="SP_Mix_GiveChange"/>
+      <bpmn:sequenceFlow id="mx4" sourceRef="SP_Mix_GiveChange" targetRef="SP_Mix_End"/>
+      <bpmn:sequenceFlow id="mx5" sourceRef="GW_Mix_Choice" targetRef="SP_Mix_Cashless" name="Безнал"/>
+      <bpmn:sequenceFlow id="mx6" sourceRef="SP_Mix_Cashless" targetRef="Task_IS_SendPaymentReq"/>
+      <bpmn:sequenceFlow id="mx7" sourceRef="SP_Mix_Approved" targetRef="SP_Mix_End"/>
+      <bpmn:sequenceFlow id="mx8" sourceRef="SP_Mix_Declined" targetRef="GW_Mix_Choice"/>
+    </bpmn:subProcess>
+    <bpmn:sequenceFlow id="s9" sourceRef="Sub_MixedPayment" targetRef="Task_PrintReceipt"/>
+
+    <bpmn:userTask id="Task_PrintReceipt" name="Пробить чек"/>
+    <bpmn:endEvent id="End_FreeCheckout" name="Свободная касса">
+      <bpmn:signalEventDefinition signalRef="sig_FreeCheckout"/>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="s10" sourceRef="Task_PrintReceipt" targetRef="End_FreeCheckout"/>
+
+    <bpmn:endEvent id="End_Interrupted" name="Прерывание (ошибка)"/>
+
+    <!-- IS: receive create sale and persist scans, handle payment exchange -->
+    <bpmn:startEvent id="Start_IS_CreateSale" name="Создать ЭД 'продажа'">
+      <bpmn:messageEventDefinition messageRef="msg_CreateSale"/>
+    </bpmn:startEvent>
+    <bpmn:task id="Task_IS_RegisterSale" name="Зарегистрировать ЭД 'продажа'"/>
+    <bpmn:sequenceFlow id="is1" sourceRef="Start_IS_CreateSale" targetRef="Task_IS_RegisterSale"/>
+    <bpmn:boundaryEvent id="BE_IS_Create_Error" name="Ошибка" attachedToRef="Task_IS_RegisterSale" cancelActivity="true">
+      <bpmn:errorEventDefinition/>
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="is1_err" sourceRef="BE_IS_Create_Error" targetRef="End_Interrupted"/>
+
+    <bpmn:intermediateCatchEvent id="Catch_IS_ScanItem" name="Получить пробитый товар">
+      <bpmn:messageEventDefinition messageRef="msg_ScanItem"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:task id="Task_IS_PersistItem" name="Сохранить позицию (транзакционно)"/>
+    <bpmn:intermediateThrowEvent id="Throw_IS_Persisted" name="Подтверждение сохранения">
+      <bpmn:messageEventDefinition messageRef="msg_PersistItem"/>
+    </bpmn:intermediateThrowEvent>
+    <bpmn:sequenceFlow id="is2" sourceRef="Task_IS_RegisterSale" targetRef="Catch_IS_ScanItem"/>
+    <bpmn:sequenceFlow id="is3" sourceRef="Catch_IS_ScanItem" targetRef="Task_IS_PersistItem"/>
+    <bpmn:sequenceFlow id="is4" sourceRef="Task_IS_PersistItem" targetRef="Throw_IS_Persisted"/>
+    <bpmn:sequenceFlow id="is5" sourceRef="Throw_IS_Persisted" targetRef="Catch_IS_ScanItem"/>
+
+    <!-- Payment exchange -->
+    <bpmn:task id="Task_IS_SendPaymentReq" name="Сформировать запрос безнала и отправить"/>
+    <bpmn:intermediateCatchEvent id="Catch_IS_PaymentApproved" name="Оплата подтверждена">
+      <bpmn:messageEventDefinition messageRef="msg_PaymentApproved"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="Catch_IS_PaymentDeclined" name="Отказ/таймаут">
+      <bpmn:messageEventDefinition messageRef="msg_PaymentDeclined"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateThrowEvent id="Throw_IS_PaymentApproved" name="Отправить подтверждение кассиру">
+      <bpmn:messageEventDefinition messageRef="msg_PaymentApproved"/>
+    </bpmn:intermediateThrowEvent>
+    <bpmn:intermediateThrowEvent id="Throw_IS_PaymentDeclined" name="Отправить отказ кассиру">
+      <bpmn:messageEventDefinition messageRef="msg_PaymentDeclined"/>
+    </bpmn:intermediateThrowEvent>
+
+    <bpmn:sequenceFlow id="is6" sourceRef="Task_IS_SendPaymentReq" targetRef="Catch_IS_PaymentApproved"/>
+    <bpmn:sequenceFlow id="is6b" sourceRef="Task_IS_SendPaymentReq" targetRef="Catch_IS_PaymentDeclined"/>
+    <bpmn:sequenceFlow id="is7" sourceRef="Catch_IS_PaymentApproved" targetRef="Throw_IS_PaymentApproved"/>
+    <bpmn:sequenceFlow id="is8" sourceRef="Catch_IS_PaymentDeclined" targetRef="Throw_IS_PaymentDeclined"/>
+  </bpmn:process>
+
+  <!-- Acquirer process -->
+  <bpmn:process id="Process_Acquirer" name="Банк-эквайер" isExecutable="false">
+    <bpmn:startEvent id="Start_Acq_Authorize" name="Получить запрос авторизации">
+      <bpmn:messageEventDefinition messageRef="msg_PaymentRequest"/>
+    </bpmn:startEvent>
+    <bpmn:userTask id="Task_Acq_CheckBalance" name="Проверить баланс / 3DS / антифрод"/>
+    <bpmn:exclusiveGateway id="GW_Acq_Result" name="Решение"/>
+    <bpmn:task id="Task_Acq_Approve" name="Отправить подтверждение"/>
+    <bpmn:task id="Task_Acq_Decline" name="Отправить отказ"/>
+    <bpmn:endEvent id="End_Acq"/>
+
+    <bpmn:sequenceFlow id="aq1" sourceRef="Start_Acq_Authorize" targetRef="Task_Acq_CheckBalance"/>
+    <bpmn:sequenceFlow id="aq2" sourceRef="Task_Acq_CheckBalance" targetRef="GW_Acq_Result"/>
+    <bpmn:sequenceFlow id="aq3a" sourceRef="GW_Acq_Result" targetRef="Task_Acq_Approve" name="OK"/>
+    <bpmn:sequenceFlow id="aq3b" sourceRef="GW_Acq_Result" targetRef="Task_Acq_Decline" name="Fail/Timeout"/>
+    <bpmn:sequenceFlow id="aq4a" sourceRef="Task_Acq_Approve" targetRef="End_Acq"/>
+    <bpmn:sequenceFlow id="aq4b" sourceRef="Task_Acq_Decline" targetRef="End_Acq"/>
+  </bpmn:process>
+  
+  <!-- BPMN DIAGRAM (with shapes and edges) -->
+  <bpmndi:BPMNDiagram id="Diagram_Shopping">
+    <bpmndi:BPMNPlane id="Plane_Shopping" bpmnElement="Collab_Shopping">
+      <!-- Participants (Pools) -->
+      <bpmndi:BPMNShape id="DI_Pool_Customer" bpmnElement="Pool_Customer">
+        <dc:Bounds x="10" y="10" width="1760" height="220"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Pool_Store" bpmnElement="Pool_Store">
+        <dc:Bounds x="10" y="240" width="1760" height="460"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Pool_Acq" bpmnElement="Pool_Acquirer">
+        <dc:Bounds x="10" y="710" width="1760" height="200"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Lanes -->
+      <bpmndi:BPMNShape id="DI_Lane_Cashier" bpmnElement="Lane_Cashier">
+        <dc:Bounds x="10" y="270" width="1760" height="230"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Lane_IS" bpmnElement="Lane_IS">
+        <dc:Bounds x="10" y="500" width="1760" height="200"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Customer nodes -->
+      <bpmndi:BPMNShape id="DI_Start_NeedGroceries" bpmnElement="Start_NeedGroceries">
+        <dc:Bounds x="40" y="70" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_GoToStore" bpmnElement="Task_GoToStore">
+        <dc:Bounds x="100" y="55" width="140" height="66"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_TakeBasket" bpmnElement="Task_TakeBasket">
+        <dc:Bounds x="260" y="55" width="180" height="66"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_SelectProducts" bpmnElement="Task_SelectProducts">
+        <dc:Bounds x="460" y="55" width="180" height="66"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_WaitQueue" bpmnElement="Task_WaitQueue">
+        <dc:Bounds x="660" y="55" width="180" height="66"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_AwaitDivider" bpmnElement="Task_AwaitDivider">
+        <dc:Bounds x="860" y="70" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_PutItemsOnBelt" bpmnElement="Task_PutItemsOnBelt">
+        <dc:Bounds x="920" y="55" width="160" height="66"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_DecidePayment" bpmnElement="Task_DecidePayment">
+        <dc:Bounds x="1095" y="65" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_WaitApproval" bpmnElement="Task_WaitApproval">
+        <dc:Bounds x="1165" y="70" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_Customer_HandCash" bpmnElement="Task_Customer_HandCash">
+        <dc:Bounds x="1160" y="120" width="160" height="60"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Catch_Customer_Change" bpmnElement="Catch_Customer_Change">
+        <dc:Bounds x="1330" y="132" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_End_TakeGoods" bpmnElement="End_TakeGoods">
+        <dc:Bounds x="1260" y="70" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Cashier nodes -->
+      <bpmndi:BPMNShape id="DI_Start_Cashier_Service" bpmnElement="Start_Cashier_Service">
+        <dc:Bounds x="60" y="320" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_CreateSale" bpmnElement="Task_CreateSale">
+        <dc:Bounds x="120" y="305" width="160" height="66"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Sub_ScanItems" bpmnElement="Sub_ScanItems" isExpanded="true">
+        <dc:Bounds x="300" y="295" width="260" height="120"/>
+      </bpmndi:BPMNShape>
+      <!-- Inside subprocess (expanded) -->
+      <bpmndi:BPMNShape id="DI_SP_Start_Scan" bpmnElement="SP_Start_Scan">
+        <dc:Bounds x="315" y="335" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_ScanItem" bpmnElement="Task_ScanItem">
+        <dc:Bounds x="360" y="325" width="120" height="56"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Catch_Cashier_Persisted" bpmnElement="Catch_Cashier_Persisted">
+        <dc:Bounds x="490" y="335" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_SP_End_Scan" bpmnElement="SP_End_Scan">
+        <dc:Bounds x="540" y="335" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="DI_Task_OfferPromos" bpmnElement="Task_OfferPromos">
+        <dc:Bounds x="580" y="305" width="180" height="66"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_GW_PromoAccepted" bpmnElement="GW_PromoAccepted">
+        <dc:Bounds x="770" y="320" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_AnnounceTotal" bpmnElement="Task_AnnounceTotal">
+        <dc:Bounds x="840" y="305" width="200" height="66"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Gateway_PaymentChoice" bpmnElement="Gateway_PaymentChoice">
+        <dc:Bounds x="1050" y="320" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_InitiateCashless" bpmnElement="Task_InitiateCashless">
+        <dc:Bounds x="1120" y="295" width="160" height="66"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Catch_Cashier_Cash" bpmnElement="Catch_Cashier_Cash">
+        <dc:Bounds x="1120" y="380" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_Cashier_GiveChange" bpmnElement="Task_Cashier_GiveChange">
+        <dc:Bounds x="1180" y="365" width="180" height="66"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Catch_Cashier_Approved" bpmnElement="Catch_Cashier_Approved">
+        <dc:Bounds x="1290" y="305" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Catch_Cashier_Declined" bpmnElement="Catch_Cashier_Declined">
+        <dc:Bounds x="1290" y="350" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_GW_CashlessResult" bpmnElement="GW_CashlessResult">
+        <dc:Bounds x="1345" y="325" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Sub_MixedPayment" bpmnElement="Sub_MixedPayment">
+        <dc:Bounds x="1120" y="440" width="300" height="110"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_PrintReceipt" bpmnElement="Task_PrintReceipt">
+        <dc:Bounds x="1410" y="305" width="160" height="66"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_End_FreeCheckout" bpmnElement="End_FreeCheckout">
+        <dc:Bounds x="1580" y="320" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_End_Interrupted" bpmnElement="End_Interrupted">
+        <dc:Bounds x="220" y="380" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+
+      <!-- IS nodes -->
+      <bpmndi:BPMNShape id="DI_Start_IS_CreateSale" bpmnElement="Start_IS_CreateSale">
+        <dc:Bounds x="100" y="540" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_IS_RegisterSale" bpmnElement="Task_IS_RegisterSale">
+        <dc:Bounds x="150" y="525" width="190" height="66"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Catch_IS_ScanItem" bpmnElement="Catch_IS_ScanItem">
+        <dc:Bounds x="355" y="540" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_IS_PersistItem" bpmnElement="Task_IS_PersistItem">
+        <dc:Bounds x="405" y="525" width="210" height="66"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Throw_IS_Persisted" bpmnElement="Throw_IS_Persisted">
+        <dc:Bounds x="625" y="540" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_IS_SendPaymentReq" bpmnElement="Task_IS_SendPaymentReq">
+        <dc:Bounds x="680" y="525" width="240" height="66"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Catch_IS_PaymentApproved" bpmnElement="Catch_IS_PaymentApproved">
+        <dc:Bounds x="940" y="525" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Catch_IS_PaymentDeclined" bpmnElement="Catch_IS_PaymentDeclined">
+        <dc:Bounds x="940" y="565" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Throw_IS_PaymentApproved" bpmnElement="Throw_IS_PaymentApproved">
+        <dc:Bounds x="985" y="525" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Throw_IS_PaymentDeclined" bpmnElement="Throw_IS_PaymentDeclined">
+        <dc:Bounds x="985" y="565" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Acquirer nodes -->
+      <bpmndi:BPMNShape id="DI_Start_Acq_Authorize" bpmnElement="Start_Acq_Authorize">
+        <dc:Bounds x="120" y="760" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_Acq_CheckBalance" bpmnElement="Task_Acq_CheckBalance">
+        <dc:Bounds x="170" y="745" width="230" height="66"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_GW_Acq_Result" bpmnElement="GW_Acq_Result">
+        <dc:Bounds x="420" y="760" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_Acq_Approve" bpmnElement="Task_Acq_Approve">
+        <dc:Bounds x="480" y="730" width="180" height="60"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_Task_Acq_Decline" bpmnElement="Task_Acq_Decline">
+        <dc:Bounds x="480" y="800" width="180" height="60"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DI_End_Acq" bpmnElement="End_Acq">
+        <dc:Bounds x="670" y="760" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+
+      <!-- Sequence Flow Edges: Customer -->
+      <bpmndi:BPMNEdge id="DI_flow1" bpmnElement="flow1">
+        <di:waypoint x="76" y="88"/>
+        <di:waypoint x="100" y="88"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_flow2" bpmnElement="flow2">
+        <di:waypoint x="240" y="88"/>
+        <di:waypoint x="260" y="88"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_flow3" bpmnElement="flow3">
+        <di:waypoint x="440" y="88"/>
+        <di:waypoint x="460" y="88"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_flow4" bpmnElement="flow4">
+        <di:waypoint x="640" y="88"/>
+        <di:waypoint x="660" y="88"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_flow5" bpmnElement="flow5">
+        <di:waypoint x="840" y="88"/>
+        <di:waypoint x="860" y="88"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_flow6" bpmnElement="flow6">
+        <di:waypoint x="896" y="88"/>
+        <di:waypoint x="920" y="88"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_flow7" bpmnElement="flow7">
+        <di:waypoint x="1080" y="88"/>
+        <di:waypoint x="1095" y="90"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_flow8_cashless" bpmnElement="flow8_cashless">
+        <di:waypoint x="1120" y="90"/>
+        <di:waypoint x="1183" y="88"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_flow8_cash" bpmnElement="flow8_cash">
+        <di:waypoint x="1120" y="90"/>
+        <di:waypoint x="1160" y="150"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_flow8_mixed" bpmnElement="flow8_mixed">
+        <di:waypoint x="1120" y="90"/>
+        <di:waypoint x="1183" y="88"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_flow9" bpmnElement="flow9">
+        <di:waypoint x="1201" y="88"/>
+        <di:waypoint x="1260" y="88"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_flow10" bpmnElement="flow10">
+        <di:waypoint x="1320" y="150"/>
+        <di:waypoint x="1330" y="150"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_flow11" bpmnElement="flow11">
+        <di:waypoint x="1366" y="150"/>
+        <di:waypoint x="1278" y="88"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- Sequence Flow Edges: Store (top-level) -->
+      <bpmndi:BPMNEdge id="DI_s1" bpmnElement="s1">
+        <di:waypoint x="96" y="338"/>
+        <di:waypoint x="120" y="338"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s2" bpmnElement="s2">
+        <di:waypoint x="280" y="338"/>
+        <di:waypoint x="300" y="338"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s3" bpmnElement="s3">
+        <di:waypoint x="560" y="338"/>
+        <di:waypoint x="580" y="338"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s4a" bpmnElement="s4a">
+        <di:waypoint x="760" y="338"/>
+        <di:waypoint x="770" y="345"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s4b" bpmnElement="s4b">
+        <di:waypoint x="795" y="345"/>
+        <di:waypoint x="430" y="345"/>
+        <di:waypoint x="430" y="338"/>
+        <di:waypoint x="300" y="338"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s4c" bpmnElement="s4c">
+        <di:waypoint x="820" y="345"/>
+        <di:waypoint x="840" y="338"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s5d" bpmnElement="s5d">
+        <di:waypoint x="1040" y="338"/>
+        <di:waypoint x="1050" y="345"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s5a" bpmnElement="s5a">
+        <di:waypoint x="1100" y="345"/>
+        <di:waypoint x="1120" y="328"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s5b" bpmnElement="s5b">
+        <di:waypoint x="1075" y="370"/>
+        <di:waypoint x="1120" y="398"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s5c" bpmnElement="s5c">
+        <di:waypoint x="1075" y="370"/>
+        <di:waypoint x="1120" y="495"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s6" bpmnElement="s6">
+        <di:waypoint x="1280" y="328"/>
+        <di:waypoint x="680" y="558"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s7a" bpmnElement="s7a">
+        <di:waypoint x="1308" y="323"/>
+        <di:waypoint x="1345" y="350"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s7b" bpmnElement="s7b">
+        <di:waypoint x="1308" y="368"/>
+        <di:waypoint x="1345" y="350"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s7c" bpmnElement="s7c">
+        <di:waypoint x="1370" y="350"/>
+        <di:waypoint x="1410" y="338"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s7d" bpmnElement="s7d">
+        <di:waypoint x="1370" y="350"/>
+        <di:waypoint x="1075" y="345"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s8a" bpmnElement="s8a">
+        <di:waypoint x="1156" y="398"/>
+        <di:waypoint x="1180" y="398"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s8b" bpmnElement="s8b">
+        <di:waypoint x="1360" y="398"/>
+        <di:waypoint x="1410" y="338"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s9" bpmnElement="s9">
+        <di:waypoint x="1420" y="495"/>
+        <di:waypoint x="1410" y="338"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_s10" bpmnElement="s10">
+        <di:waypoint x="1570" y="338"/>
+        <di:waypoint x="1598" y="338"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- Subprocess internal flows -->
+      <bpmndi:BPMNEdge id="DI_ss1" bpmnElement="ss1">
+        <di:waypoint x="351" y="353"/>
+        <di:waypoint x="360" y="353"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_ss2" bpmnElement="ss2">
+        <di:waypoint x="480" y="353"/>
+        <di:waypoint x="490" y="353"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_ss3" bpmnElement="ss3">
+        <di:waypoint x="526" y="353"/>
+        <di:waypoint x="540" y="353"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- IS sequence flows -->
+      <bpmndi:BPMNEdge id="DI_is1" bpmnElement="is1">
+        <di:waypoint x="136" y="558"/>
+        <di:waypoint x="150" y="558"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_is2" bpmnElement="is2">
+        <di:waypoint x="340" y="558"/>
+        <di:waypoint x="355" y="558"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_is3" bpmnElement="is3">
+        <di:waypoint x="391" y="558"/>
+        <di:waypoint x="405" y="558"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_is4" bpmnElement="is4">
+        <di:waypoint x="615" y="558"/>
+        <di:waypoint x="625" y="558"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_is5" bpmnElement="is5">
+        <di:waypoint x="661" y="558"/>
+        <di:waypoint x="355" y="558"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_is6" bpmnElement="is6">
+        <di:waypoint x="920" y="558"/>
+        <di:waypoint x="940" y="543"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_is6b" bpmnElement="is6b">
+        <di:waypoint x="920" y="558"/>
+        <di:waypoint x="940" y="583"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_is7" bpmnElement="is7">
+        <di:waypoint x="976" y="543"/>
+        <di:waypoint x="985" y="543"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_is8" bpmnElement="is8">
+        <di:waypoint x="976" y="583"/>
+        <di:waypoint x="985" y="583"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- Acquirer sequence flows -->
+      <bpmndi:BPMNEdge id="DI_aq1" bpmnElement="aq1">
+        <di:waypoint x="156" y="778"/>
+        <di:waypoint x="170" y="778"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_aq2" bpmnElement="aq2">
+        <di:waypoint x="400" y="778"/>
+        <di:waypoint x="420" y="785"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_aq3a" bpmnElement="aq3a">
+        <di:waypoint x="445" y="785"/>
+        <di:waypoint x="480" y="760"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_aq3b" bpmnElement="aq3b">
+        <di:waypoint x="445" y="785"/>
+        <di:waypoint x="480" y="830"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_aq4a" bpmnElement="aq4a">
+        <di:waypoint x="660" y="760"/>
+        <di:waypoint x="688" y="778"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_aq4b" bpmnElement="aq4b">
+        <di:waypoint x="660" y="830"/>
+        <di:waypoint x="688" y="778"/>
+      </bpmndi:BPMNEdge>
+
+      <!-- Message Flow Edges -->
+      <bpmndi:BPMNEdge id="DI_mf_ItemsOnBelt" bpmnElement="mf_ItemsOnBelt">
+        <di:waypoint x="1080" y="88"/>
+        <di:waypoint x="78" y="338"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_mf_CreateSale" bpmnElement="mf_CreateSale">
+        <di:waypoint x="280" y="338"/>
+        <di:waypoint x="118" y="558"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_mf_ScanItem" bpmnElement="mf_ScanItem">
+        <di:waypoint x="480" y="353"/>
+        <di:waypoint x="373" y="558"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_mf_PersistAck" bpmnElement="mf_PersistAck">
+        <di:waypoint x="643" y="558"/>
+        <di:waypoint x="508" y="353"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_mf_PaymentRequest" bpmnElement="mf_PaymentRequest">
+        <di:waypoint x="920" y="558"/>
+        <di:waypoint x="138" y="778"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_mf_PaymentApproved" bpmnElement="mf_PaymentApproved">
+        <di:waypoint x="570" y="760"/>
+        <di:waypoint x="958" y="543"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_mf_PaymentDeclined" bpmnElement="mf_PaymentDeclined">
+        <di:waypoint x="570" y="830"/>
+        <di:waypoint x="958" y="583"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_mf_IS_to_Cashier_Approved" bpmnElement="mf_IS_to_Cashier_Approved">
+        <di:waypoint x="1003" y="543"/>
+        <di:waypoint x="1308" y="323"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_mf_IS_to_Cashier_Declined" bpmnElement="mf_IS_to_Cashier_Declined">
+        <di:waypoint x="1003" y="583"/>
+        <di:waypoint x="1308" y="368"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_mf_CashToCashier" bpmnElement="mf_CashToCashier">
+        <di:waypoint x="1240" y="150"/>
+        <di:waypoint x="1138" y="398"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DI_mf_ChangeToCustomer" bpmnElement="mf_ChangeToCustomer">
+        <di:waypoint x="1360" y="398"/>
+        <di:waypoint x="1348" y="150"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
+
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_Shopping" targetNamespace="https://example.com/bpmn/shopping">
+  <!-- Messages and Signals -->
+  <bpmn:message id="msg_ItemsOnBelt" name="Items on belt"/>
+  <bpmn:message id="msg_CreateSale" name="Create Sale Document"/>
+  <bpmn:message id="msg_ScanItem" name="Scan Item"/>
+  <bpmn:message id="msg_PersistItem" name="Persist Item Transactionally"/>
+  <bpmn:message id="msg_PaymentRequest" name="Payment Authorization Request"/>
+  <bpmn:message id="msg_PaymentApproved" name="Payment Approved"/>
+  <bpmn:message id="msg_PaymentDeclined" name="Payment Declined"/>
+  <bpmn:message id="msg_CashHanded" name="Cash Handed Over"/>
+  <bpmn:message id="msg_ChangeGiven" name="Change Given"/>
+  <bpmn:signal id="sig_FreeCheckout" name="Free Checkout"/>
+
+  <!-- Collaboration with participants -->
+  <bpmn:collaboration id="Collab_Shopping">
+    <bpmn:participant id="Pool_Customer" name="Покупатель" processRef="Process_Customer"/>
+    <bpmn:participant id="Pool_Store" name="Магазин" processRef="Process_Store"/>
+    <bpmn:participant id="Pool_Acquirer" name="Банк-эквайер" processRef="Process_Acquirer"/>
+
+    <!-- Message Flows (declared here; elements referenced inside processes) -->
+    <!-- Customer puts items on belt -> Cashier starts service -->
+    <bpmn:messageFlow id="mf_ItemsOnBelt" name="Items on belt" sourceRef="Task_PutItemsOnBelt" targetRef="Start_Cashier_Service" messageRef="msg_ItemsOnBelt"/>
+
+    <!-- Cashier -> IS: Create Sale -->
+    <bpmn:messageFlow id="mf_CreateSale" name="Create Sale" sourceRef="Task_CreateSale" targetRef="Start_IS_CreateSale" messageRef="msg_CreateSale"/>
+
+    <!-- Cashier -> IS: Scan Item, IS -> Cashier: Persist Ack (optional) -->
+    <bpmn:messageFlow id="mf_ScanItem" name="Scan Item" sourceRef="Task_ScanItem" targetRef="Catch_IS_ScanItem" messageRef="msg_ScanItem"/>
+    <bpmn:messageFlow id="mf_PersistAck" name="Persisted" sourceRef="Throw_IS_Persisted" targetRef="Catch_Cashier_Persisted" messageRef="msg_PersistItem"/>
+
+    <!-- Noncash: Store IS <-> Acquirer -->
+    <bpmn:messageFlow id="mf_PaymentRequest" name="Payment Request" sourceRef="Task_IS_SendPaymentReq" targetRef="Start_Acq_Authorize" messageRef="msg_PaymentRequest"/>
+    <bpmn:messageFlow id="mf_PaymentApproved" name="Approved" sourceRef="Task_Acq_Approve" targetRef="Catch_IS_PaymentApproved" messageRef="msg_PaymentApproved"/>
+    <bpmn:messageFlow id="mf_PaymentDeclined" name="Declined" sourceRef="Task_Acq_Decline" targetRef="Catch_IS_PaymentDeclined" messageRef="msg_PaymentDeclined"/>
+
+    <!-- IS -> Cashier: authorization result -->
+    <bpmn:messageFlow id="mf_IS_to_Cashier_Approved" name="Approved" sourceRef="Throw_IS_PaymentApproved" targetRef="Catch_Cashier_Approved" messageRef="msg_PaymentApproved"/>
+    <bpmn:messageFlow id="mf_IS_to_Cashier_Declined" name="Declined" sourceRef="Throw_IS_PaymentDeclined" targetRef="Catch_Cashier_Declined" messageRef="msg_PaymentDeclined"/>
+
+    <!-- Cash: Customer -> Cashier and back for change -->
+    <bpmn:messageFlow id="mf_CashToCashier" name="Hand Cash" sourceRef="Task_Customer_HandCash" targetRef="Catch_Cashier_Cash" messageRef="msg_CashHanded"/>
+    <bpmn:messageFlow id="mf_ChangeToCustomer" name="Give Change" sourceRef="Task_Cashier_GiveChange" targetRef="Catch_Customer_Change" messageRef="msg_ChangeGiven"/>
+  </bpmn:collaboration>
+
+  <!-- Customer process -->
+  <bpmn:process id="Process_Customer" name="Покупатель" isExecutable="false">
+    <bpmn:startEvent id="Start_NeedGroceries" name="Продукты закончились"/>
+    <bpmn:sequenceFlow id="flow1" sourceRef="Start_NeedGroceries" targetRef="Task_GoToStore"/>
+
+    <bpmn:userTask id="Task_GoToStore" name="Отправиться в магазин"/>
+    <bpmn:sequenceFlow id="flow2" sourceRef="Task_GoToStore" targetRef="Task_TakeBasket"/>
+
+    <bpmn:userTask id="Task_TakeBasket" name="Взять корзинку и пройти в зал"/>
+    <bpmn:sequenceFlow id="flow3" sourceRef="Task_TakeBasket" targetRef="Task_SelectProducts"/>
+
+    <bpmn:subProcess id="Task_SelectProducts" name="Подбор товаров (по списку)">
+      <bpmn:multiInstanceLoopCharacteristics isSequential="false"/>
+      <bpmn:startEvent id="SP_Start_Select"/>
+      <bpmn:userTask id="SP_Task_PickItem" name="Выбрать товар"/>
+      <bpmn:endEvent id="SP_End_Select"/>
+      <bpmn:sequenceFlow id="sp_f1" sourceRef="SP_Start_Select" targetRef="SP_Task_PickItem"/>
+      <bpmn:sequenceFlow id="sp_f2" sourceRef="SP_Task_PickItem" targetRef="SP_End_Select"/>
+    </bpmn:subProcess>
+    <bpmn:sequenceFlow id="flow4" sourceRef="Task_SelectProducts" targetRef="Task_WaitQueue"/>
+
+    <bpmn:userTask id="Task_WaitQueue" name="Ждать очереди в зоне касс"/>
+    <bpmn:sequenceFlow id="flow5" sourceRef="Task_WaitQueue" targetRef="Task_AwaitDivider"/>
+
+    <bpmn:intermediateCatchEvent id="Task_AwaitDivider" name="Табличка на ленте: закончено">
+      <bpmn:timerEventDefinition/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="flow6" sourceRef="Task_AwaitDivider" targetRef="Task_PutItemsOnBelt"/>
+
+    <bpmn:sendTask id="Task_PutItemsOnBelt" name="Выкладывать товары на ленту" messageRef="msg_ItemsOnBelt"/>
+    <bpmn:sequenceFlow id="flow7" sourceRef="Task_PutItemsOnBelt" targetRef="Task_DecidePayment"/>
+
+    <!-- Payment interaction from customer's side -->
+    <bpmn:exclusiveGateway id="Task_DecidePayment" name="Выбор способа оплаты"/>
+    <bpmn:sequenceFlow id="flow8_cashless" sourceRef="Task_DecidePayment" targetRef="Task_WaitApproval" name="Безнал"/>
+    <bpmn:sequenceFlow id="flow8_cash" sourceRef="Task_DecidePayment" targetRef="Task_Customer_HandCash" name="Наличные"/>
+    <bpmn:sequenceFlow id="flow8_mixed" sourceRef="Task_DecidePayment" targetRef="Task_WaitApproval" name="Смешанная"/>
+
+    <bpmn:intermediateCatchEvent id="Task_WaitApproval" name="Ждать подтверждения оплаты">
+      <bpmn:messageEventDefinition messageRef="msg_PaymentApproved"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="flow9" sourceRef="Task_WaitApproval" targetRef="End_TakeGoods"/>
+
+    <bpmn:sendTask id="Task_Customer_HandCash" name="Передать наличные" messageRef="msg_CashHanded"/>
+    <bpmn:sequenceFlow id="flow10" sourceRef="Task_Customer_HandCash" targetRef="Catch_Customer_Change"/>
+
+    <bpmn:intermediateCatchEvent id="Catch_Customer_Change" name="Получить сдачу (при необходимости)">
+      <bpmn:messageEventDefinition messageRef="msg_ChangeGiven"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="flow11" sourceRef="Catch_Customer_Change" targetRef="End_TakeGoods"/>
+
+    <bpmn:endEvent id="End_TakeGoods" name="Забрать товары и уйти домой">
+      <bpmn:terminateEventDefinition/>
+    </bpmn:endEvent>
+  </bpmn:process>
+
+  <!-- Store (Cashier + IS) process -->
+  <bpmn:process id="Process_Store" name="Магазин" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_Store">
+      <bpmn:lane id="Lane_Cashier" name="Кассир">
+        <bpmn:flowNodeRef>Start_Cashier_Service</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_CreateSale</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Sub_ScanItems</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_OfferPromos</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_PaymentChoice</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_InitiateCashless</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Catch_Cashier_Approved</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Catch_Cashier_Declined</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Catch_Cashier_Persisted</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ScanItem</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Catch_Cashier_Cash</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Cashier_GiveChange</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_PrintReceipt</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_FreeCheckout</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_IS" name="ИС Магазина">
+        <bpmn:flowNodeRef>Start_IS_CreateSale</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_IS_RegisterSale</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Catch_IS_ScanItem</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Throw_IS_Persisted</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_IS_SendPaymentReq</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Catch_IS_PaymentApproved</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Catch_IS_PaymentDeclined</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Throw_IS_PaymentApproved</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Throw_IS_PaymentDeclined</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+
+    <!-- Cashier: start when items on belt -->
+    <bpmn:startEvent id="Start_Cashier_Service" name="Начать обслуживание">
+      <bpmn:messageEventDefinition messageRef="msg_ItemsOnBelt"/>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="s1" sourceRef="Start_Cashier_Service" targetRef="Task_CreateSale"/>
+
+    <bpmn:sendTask id="Task_CreateSale" name="Создать ЭД 'продажа'" messageRef="msg_CreateSale"/>
+    <bpmn:boundaryEvent id="BE_CreateSale_Error" name="Ошибка создания" attachedToRef="Task_CreateSale" cancelActivity="true">
+      <bpmn:errorEventDefinition/>
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="s1_err" sourceRef="BE_CreateSale_Error" targetRef="End_Interrupted"/>
+    <bpmn:sequenceFlow id="s2" sourceRef="Task_CreateSale" targetRef="Sub_ScanItems"/>
+
+    <!-- Scanning loop with transactional persistence ack from IS -->
+    <bpmn:subProcess id="Sub_ScanItems" name="Пробить все товары">
+      <bpmn:standardLoopCharacteristics testBefore="true">
+        <bpmn:loopCondition xsi:type="bpmn:tFormalExpression">${hasMoreItems}</bpmn:loopCondition>
+      </bpmn:standardLoopCharacteristics>
+
+      <bpmn:startEvent id="SP_Start_Scan"/>
+      <bpmn:sequenceFlow id="ss1" sourceRef="SP_Start_Scan" targetRef="Task_ScanItem"/>
+
+      <bpmn:sendTask id="Task_ScanItem" name="Пробить товар" messageRef="msg_ScanItem"/>
+      <bpmn:intermediateCatchEvent id="Catch_Cashier_Persisted" name="Сохранено (транзакционно)">
+        <bpmn:messageEventDefinition messageRef="msg_PersistItem"/>
+      </bpmn:intermediateCatchEvent>
+      <bpmn:sequenceFlow id="ss2" sourceRef="Task_ScanItem" targetRef="Catch_Cashier_Persisted"/>
+      <bpmn:endEvent id="SP_End_Scan"/>
+      <bpmn:sequenceFlow id="ss3" sourceRef="Catch_Cashier_Persisted" targetRef="SP_End_Scan"/>
+    </bpmn:subProcess>
+    <bpmn:sequenceFlow id="s3" sourceRef="Sub_ScanItems" targetRef="Task_OfferPromos"/>
+
+    <bpmn:userTask id="Task_OfferPromos" name="Предложить акции и пакет"/>
+    <bpmn:exclusiveGateway id="GW_PromoAccepted" name="Согласен?"/>
+    <bpmn:sequenceFlow id="s4a" sourceRef="Task_OfferPromos" targetRef="GW_PromoAccepted"/>
+    <bpmn:sequenceFlow id="s4b" sourceRef="GW_PromoAccepted" targetRef="Sub_ScanItems" name="Да"/>
+    <bpmn:sequenceFlow id="s4c" sourceRef="GW_PromoAccepted" targetRef="Gateway_PaymentChoice" name="Нет"/>
+
+    <bpmn:userTask id="Task_AnnounceTotal" name="Озвучить сумму и спросить способ"/>
+    <bpmn:exclusiveGateway id="Gateway_PaymentChoice" name="Способ оплаты"/>
+    <bpmn:sequenceFlow id="s5a" sourceRef="Gateway_PaymentChoice" targetRef="Task_InitiateCashless" name="Безнал"/>
+    <bpmn:sequenceFlow id="s5b" sourceRef="Gateway_PaymentChoice" targetRef="Catch_Cashier_Cash" name="Наличные"/>
+    <bpmn:sequenceFlow id="s5c" sourceRef="Gateway_PaymentChoice" targetRef="Sub_MixedPayment" name="Смешанная"/>
+    <bpmn:sequenceFlow id="s5d" sourceRef="Task_AnnounceTotal" targetRef="Gateway_PaymentChoice"/>
+
+    <!-- Cashless path -->
+    <bpmn:userTask id="Task_InitiateCashless" name="Инициировать безнал"/>
+    <bpmn:sequenceFlow id="s6" sourceRef="Task_InitiateCashless" targetRef="Task_IS_SendPaymentReq"/>
+
+    <bpmn:intermediateCatchEvent id="Catch_Cashier_Approved" name="Оплата подтверждена">
+      <bpmn:messageEventDefinition messageRef="msg_PaymentApproved"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="Catch_Cashier_Declined" name="Отказ/таймаут">
+      <bpmn:messageEventDefinition messageRef="msg_PaymentDeclined"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:exclusiveGateway id="GW_CashlessResult" name="Результат безнала"/>
+    <bpmn:sequenceFlow id="s7a" sourceRef="Catch_Cashier_Approved" targetRef="GW_CashlessResult"/>
+    <bpmn:sequenceFlow id="s7b" sourceRef="Catch_Cashier_Declined" targetRef="GW_CashlessResult"/>
+    <bpmn:sequenceFlow id="s7c" sourceRef="GW_CashlessResult" targetRef="Task_PrintReceipt" name="Успешно"/>
+    <bpmn:sequenceFlow id="s7d" sourceRef="GW_CashlessResult" targetRef="Gateway_PaymentChoice" name="Неуспешно"/>
+
+    <!-- Cash path -->
+    <bpmn:intermediateCatchEvent id="Catch_Cashier_Cash" name="Получить наличные">
+      <bpmn:messageEventDefinition messageRef="msg_CashHanded"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:userTask id="Task_Cashier_GiveChange" name="Выдать сдачу (если нужно)"/>
+    <bpmn:sequenceFlow id="s8a" sourceRef="Catch_Cashier_Cash" targetRef="Task_Cashier_GiveChange"/>
+    <bpmn:sequenceFlow id="s8b" sourceRef="Task_Cashier_GiveChange" targetRef="Task_PrintReceipt"/>
+
+    <!-- Mixed payment as loop collecting partial payments -->
+    <bpmn:subProcess id="Sub_MixedPayment" name="Смешанная оплата (повторять, пока сумма &gt; 0)">
+      <bpmn:standardLoopCharacteristics testBefore="true">
+        <bpmn:loopCondition xsi:type="bpmn:tFormalExpression">${remainingAmount &gt; 0}</bpmn:loopCondition>
+      </bpmn:standardLoopCharacteristics>
+
+      <bpmn:startEvent id="SP_Mix_Start"/>
+      <bpmn:exclusiveGateway id="GW_Mix_Choice" name="Выбрать платеж"/>
+      <bpmn:intermediateCatchEvent id="SP_Mix_Cash" name="Получить наличные">
+        <bpmn:messageEventDefinition messageRef="msg_CashHanded"/>
+      </bpmn:intermediateCatchEvent>
+      <bpmn:userTask id="SP_Mix_GiveChange" name="Выдать сдачу (если нужно)"/>
+      <bpmn:userTask id="SP_Mix_Cashless" name="Инициировать безнал на часть суммы"/>
+      <bpmn:intermediateCatchEvent id="SP_Mix_Approved" name="Часть оплачена">
+        <bpmn:messageEventDefinition messageRef="msg_PaymentApproved"/>
+      </bpmn:intermediateCatchEvent>
+      <bpmn:intermediateCatchEvent id="SP_Mix_Declined" name="Отказ/таймаут">
+        <bpmn:messageEventDefinition messageRef="msg_PaymentDeclined"/>
+      </bpmn:intermediateCatchEvent>
+      <bpmn:endEvent id="SP_Mix_End"/>
+
+      <bpmn:sequenceFlow id="mx1" sourceRef="SP_Mix_Start" targetRef="GW_Mix_Choice"/>
+      <bpmn:sequenceFlow id="mx2" sourceRef="GW_Mix_Choice" targetRef="SP_Mix_Cash" name="Наличные"/>
+      <bpmn:sequenceFlow id="mx3" sourceRef="SP_Mix_Cash" targetRef="SP_Mix_GiveChange"/>
+      <bpmn:sequenceFlow id="mx4" sourceRef="SP_Mix_GiveChange" targetRef="SP_Mix_End"/>
+      <bpmn:sequenceFlow id="mx5" sourceRef="GW_Mix_Choice" targetRef="SP_Mix_Cashless" name="Безнал"/>
+      <bpmn:sequenceFlow id="mx6" sourceRef="SP_Mix_Cashless" targetRef="Task_IS_SendPaymentReq"/>
+      <bpmn:sequenceFlow id="mx7" sourceRef="SP_Mix_Approved" targetRef="SP_Mix_End"/>
+      <bpmn:sequenceFlow id="mx8" sourceRef="SP_Mix_Declined" targetRef="GW_Mix_Choice"/>
+    </bpmn:subProcess>
+    <bpmn:sequenceFlow id="s9" sourceRef="Sub_MixedPayment" targetRef="Task_PrintReceipt"/>
+
+    <bpmn:userTask id="Task_PrintReceipt" name="Пробить чек"/>
+    <bpmn:endEvent id="End_FreeCheckout" name="Свободная касса">
+      <bpmn:signalEventDefinition signalRef="sig_FreeCheckout"/>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="s10" sourceRef="Task_PrintReceipt" targetRef="End_FreeCheckout"/>
+
+    <bpmn:endEvent id="End_Interrupted" name="Прерывание (ошибка)"/>
+
+    <!-- IS: receive create sale and persist scans, handle payment exchange -->
+    <bpmn:startEvent id="Start_IS_CreateSale" name="Создать ЭД 'продажа'">
+      <bpmn:messageEventDefinition messageRef="msg_CreateSale"/>
+    </bpmn:startEvent>
+    <bpmn:task id="Task_IS_RegisterSale" name="Зарегистрировать ЭД 'продажа'"/>
+    <bpmn:sequenceFlow id="is1" sourceRef="Start_IS_CreateSale" targetRef="Task_IS_RegisterSale"/>
+    <bpmn:boundaryEvent id="BE_IS_Create_Error" name="Ошибка" attachedToRef="Task_IS_RegisterSale" cancelActivity="true">
+      <bpmn:errorEventDefinition/>
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="is1_err" sourceRef="BE_IS_Create_Error" targetRef="End_Interrupted"/>
+
+    <bpmn:intermediateCatchEvent id="Catch_IS_ScanItem" name="Получить пробитый товар">
+      <bpmn:messageEventDefinition messageRef="msg_ScanItem"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:task id="Task_IS_PersistItem" name="Сохранить позицию (транзакционно)"/>
+    <bpmn:intermediateThrowEvent id="Throw_IS_Persisted" name="Подтверждение сохранения">
+      <bpmn:messageEventDefinition messageRef="msg_PersistItem"/>
+    </bpmn:intermediateThrowEvent>
+    <bpmn:sequenceFlow id="is2" sourceRef="Task_IS_RegisterSale" targetRef="Catch_IS_ScanItem"/>
+    <bpmn:sequenceFlow id="is3" sourceRef="Catch_IS_ScanItem" targetRef="Task_IS_PersistItem"/>
+    <bpmn:sequenceFlow id="is4" sourceRef="Task_IS_PersistItem" targetRef="Throw_IS_Persisted"/>
+    <bpmn:sequenceFlow id="is5" sourceRef="Throw_IS_Persisted" targetRef="Catch_IS_ScanItem"/>
+
+    <!-- Payment exchange -->
+    <bpmn:task id="Task_IS_SendPaymentReq" name="Сформировать запрос безнала и отправить"/>
+    <bpmn:intermediateCatchEvent id="Catch_IS_PaymentApproved" name="Оплата подтверждена">
+      <bpmn:messageEventDefinition messageRef="msg_PaymentApproved"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="Catch_IS_PaymentDeclined" name="Отказ/таймаут">
+      <bpmn:messageEventDefinition messageRef="msg_PaymentDeclined"/>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateThrowEvent id="Throw_IS_PaymentApproved" name="Отправить подтверждение кассиру">
+      <bpmn:messageEventDefinition messageRef="msg_PaymentApproved"/>
+    </bpmn:intermediateThrowEvent>
+    <bpmn:intermediateThrowEvent id="Throw_IS_PaymentDeclined" name="Отправить отказ кассиру">
+      <bpmn:messageEventDefinition messageRef="msg_PaymentDeclined"/>
+    </bpmn:intermediateThrowEvent>
+
+    <bpmn:sequenceFlow id="is6" sourceRef="Task_IS_SendPaymentReq" targetRef="Catch_IS_PaymentApproved"/>
+    <bpmn:sequenceFlow id="is6b" sourceRef="Task_IS_SendPaymentReq" targetRef="Catch_IS_PaymentDeclined"/>
+    <bpmn:sequenceFlow id="is7" sourceRef="Catch_IS_PaymentApproved" targetRef="Throw_IS_PaymentApproved"/>
+    <bpmn:sequenceFlow id="is8" sourceRef="Catch_IS_PaymentDeclined" targetRef="Throw_IS_PaymentDeclined"/>
+  </bpmn:process>
+
+  <!-- Acquirer process -->
+  <bpmn:process id="Process_Acquirer" name="Банк-эквайер" isExecutable="false">
+    <bpmn:startEvent id="Start_Acq_Authorize" name="Получить запрос авторизации">
+      <bpmn:messageEventDefinition messageRef="msg_PaymentRequest"/>
+    </bpmn:startEvent>
+    <bpmn:userTask id="Task_Acq_CheckBalance" name="Проверить баланс / 3DS / антифрод"/>
+    <bpmn:exclusiveGateway id="GW_Acq_Result" name="Решение"/>
+    <bpmn:task id="Task_Acq_Approve" name="Отправить подтверждение"/>
+    <bpmn:task id="Task_Acq_Decline" name="Отправить отказ"/>
+    <bpmn:endEvent id="End_Acq"/>
+
+    <bpmn:sequenceFlow id="aq1" sourceRef="Start_Acq_Authorize" targetRef="Task_Acq_CheckBalance"/>
+    <bpmn:sequenceFlow id="aq2" sourceRef="Task_Acq_CheckBalance" targetRef="GW_Acq_Result"/>
+    <bpmn:sequenceFlow id="aq3a" sourceRef="GW_Acq_Result" targetRef="Task_Acq_Approve" name="OK"/>
+    <bpmn:sequenceFlow id="aq3b" sourceRef="GW_Acq_Result" targetRef="Task_Acq_Decline" name="Fail/Timeout"/>
+    <bpmn:sequenceFlow id="aq4a" sourceRef="Task_Acq_Approve" targetRef="End_Acq"/>
+    <bpmn:sequenceFlow id="aq4b" sourceRef="Task_Acq_Decline" targetRef="End_Acq"/>
+  </bpmn:process>
+</bpmn:definitions>
