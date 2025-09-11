@@ -1,0 +1,486 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_Lenta_Shopping_Full" targetNamespace="http://example.com/bpmn/lenta-shopping">
+  <bpmn:process id="Process_Lenta_Full" name="Полный процесс покупки в Ленте" isExecutable="true">
+    <bpmn:startEvent id="Start_Need" name="Закончились продукты">
+      <bpmn:outgoing>F1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="Task_GoToStore" name="Отправиться в магазин">
+      <bpmn:incoming>F1</bpmn:incoming>
+      <bpmn:outgoing>F2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_TakeBasket" name="Взять корзинку">
+      <bpmn:incoming>F2</bpmn:incoming>
+      <bpmn:outgoing>F3</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_PickGoods" name="Подобрать товары по списку">
+      <bpmn:incoming>F3</bpmn:incoming>
+      <bpmn:outgoing>F4</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_Queue" name="Подойти к кассе и ждать очереди">
+      <bpmn:incoming>F4</bpmn:incoming>
+      <bpmn:outgoing>F5</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_PutOnBelt" name="Выложить товары на ленту">
+      <bpmn:incoming>F5</bpmn:incoming>
+      <bpmn:outgoing>F6</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_StartService" name="Кассир начинает обслуживание">
+      <bpmn:incoming>F6</bpmn:incoming>
+      <bpmn:outgoing>F7</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_CreateSaleED" name="Создать ЭД &#39;продажа&#39; в ИС">
+      <bpmn:incoming>F7</bpmn:incoming>
+      <bpmn:outgoing>F8</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="GW_CreateSaleOK" name="Ошибка при создании?" default="F8_OK">
+      <bpmn:incoming>F8</bpmn:incoming>
+      <bpmn:outgoing>F8_FAIL</bpmn:outgoing>
+      <bpmn:outgoing>F8_OK</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="End_Fail" name="Прервать обслуживание">
+      <bpmn:incoming>F8_FAIL</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:transaction id="Trans_Scan" name="Пробитие товаров (транзакционно)">
+      <bpmn:incoming>F8_OK</bpmn:incoming>
+      <bpmn:outgoing>F9</bpmn:outgoing>
+      <bpmn:startEvent id="TScan_Start" />
+      <bpmn:userTask id="TScan_ScanItem" name="Сканировать товар" />
+      <bpmn:serviceTask id="TScan_Record" name="Зафиксировать в ИС (короткая транзакция)" />
+      <bpmn:exclusiveGateway id="TScan_More" name="Еще есть товары?" default="TScan_No">
+        <bpmn:outgoing>TScan_Yes</bpmn:outgoing>
+        <bpmn:outgoing>TScan_No</bpmn:outgoing>
+      </bpmn:exclusiveGateway>
+      <bpmn:endEvent id="TScan_End" />
+      <bpmn:sequenceFlow id="TSF1" sourceRef="TScan_Start" targetRef="TScan_ScanItem" />
+      <bpmn:sequenceFlow id="TSF2" sourceRef="TScan_ScanItem" targetRef="TScan_Record" />
+      <bpmn:sequenceFlow id="TSF3" sourceRef="TScan_Record" targetRef="TScan_More" />
+      <bpmn:sequenceFlow id="TScan_Yes" name="Да" sourceRef="TScan_More" targetRef="TScan_ScanItem" />
+      <bpmn:sequenceFlow id="TScan_No" name="Нет" sourceRef="TScan_More" targetRef="TScan_End" />
+    </bpmn:transaction>
+    <bpmn:userTask id="Task_OfferPromos" name="Предложить акции и пакет">
+      <bpmn:incoming>F9</bpmn:incoming>
+      <bpmn:outgoing>F10</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="GW_PromoAgree" name="Клиент согласен?" default="F10_No">
+      <bpmn:incoming>F10</bpmn:incoming>
+      <bpmn:outgoing>F10_Yes</bpmn:outgoing>
+      <bpmn:outgoing>F10_No</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:transaction id="Trans_Promos" name="Добавить акции/пакет (транзакционно)">
+      <bpmn:incoming>F10_Yes</bpmn:incoming>
+      <bpmn:outgoing>F11</bpmn:outgoing>
+      <bpmn:startEvent id="TPromo_Start" />
+      <bpmn:userTask id="TPromo_Scan" name="Сканировать акции/пакет" />
+      <bpmn:serviceTask id="TPromo_Record" name="Зафиксировать в ИС (короткая транзакция)" />
+      <bpmn:endEvent id="TPromo_End" />
+      <bpmn:sequenceFlow id="TPS1" sourceRef="TPromo_Start" targetRef="TPromo_Scan" />
+      <bpmn:sequenceFlow id="TPS2" sourceRef="TPromo_Scan" targetRef="TPromo_Record" />
+      <bpmn:sequenceFlow id="TPS3" sourceRef="TPromo_Record" targetRef="TPromo_End" />
+    </bpmn:transaction>
+    <bpmn:userTask id="Task_AnnounceAndAsk" name="Озвучить сумму и спросить способ оплаты">
+      <bpmn:incoming>F10_No</bpmn:incoming>
+      <bpmn:incoming>F11</bpmn:incoming>
+      <bpmn:outgoing>F12</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:inclusiveGateway id="GW_SelectPayments" name="Выбор способов оплаты (возможна комбинация)" default="F12_ToJoin">
+      <bpmn:incoming>F12</bpmn:incoming>
+      <bpmn:outgoing>F12_Cash</bpmn:outgoing>
+      <bpmn:outgoing>F12_Card</bpmn:outgoing>
+      <bpmn:outgoing>F12_Gift</bpmn:outgoing>
+      <bpmn:outgoing>F12_ToJoin</bpmn:outgoing>
+    </bpmn:inclusiveGateway>
+    <bpmn:userTask id="Task_Cash" name="Принять наличные, выдать сдачу при необходимости">
+      <bpmn:incoming>F12_Cash</bpmn:incoming>
+      <bpmn:outgoing>F13_CashDone</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Task_GiftCard" name="Принять подарочную карту">
+      <bpmn:incoming>F12_Gift</bpmn:incoming>
+      <bpmn:outgoing>F13_GiftDone</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:transaction id="Trans_CardPay" name="Безналичная оплата (транзакция)">
+      <bpmn:incoming>F12_Card</bpmn:incoming>
+      <bpmn:outgoing>F13_CardDone</bpmn:outgoing>
+      <bpmn:startEvent id="TPay_Start" />
+      <bpmn:serviceTask id="TPay_Form" name="Сформировать запрос на оплату" />
+      <bpmn:intermediateThrowEvent id="TPay_Send" name="Отправить запрос" />
+      <bpmn:intermediateCatchEvent id="TPay_Wait" name="Ожидать подтверждение" />
+      <bpmn:serviceTask id="TPay_Record" name="Зафиксировать результат оплаты" />
+      <bpmn:endEvent id="TPay_End" />
+      <bpmn:sequenceFlow id="TPF1" sourceRef="TPay_Start" targetRef="TPay_Form" />
+      <bpmn:sequenceFlow id="TPF2" sourceRef="TPay_Form" targetRef="TPay_Send" />
+      <bpmn:sequenceFlow id="TPF3" sourceRef="TPay_Send" targetRef="TPay_Wait" />
+      <bpmn:sequenceFlow id="TPF4" sourceRef="TPay_Wait" targetRef="TPay_Record" />
+      <bpmn:sequenceFlow id="TPF5" sourceRef="TPay_Record" targetRef="TPay_End" />
+    </bpmn:transaction>
+    <bpmn:inclusiveGateway id="GW_PaymentsJoin" name="Синхронизация выбранных оплат">
+      <bpmn:incoming>F13_CashDone</bpmn:incoming>
+      <bpmn:incoming>F13_GiftDone</bpmn:incoming>
+      <bpmn:incoming>F13_CardDone</bpmn:incoming>
+      <bpmn:incoming>F12_ToJoin</bpmn:incoming>
+      <bpmn:outgoing>F14</bpmn:outgoing>
+    </bpmn:inclusiveGateway>
+    <bpmn:exclusiveGateway id="GW_FullyPaid" name="Полностью оплачено?" default="F14_No">
+      <bpmn:incoming>F14</bpmn:incoming>
+      <bpmn:outgoing>F14_Yes</bpmn:outgoing>
+      <bpmn:outgoing>F14_No</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="GW_PrintReceipt" name="Печатать чек?" default="F15_No">
+      <bpmn:incoming>F14_Yes</bpmn:incoming>
+      <bpmn:outgoing>F15_Yes</bpmn:outgoing>
+      <bpmn:outgoing>F15_No</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="Task_Print" name="Напечатать чек">
+      <bpmn:incoming>F15_Yes</bpmn:incoming>
+      <bpmn:outgoing>F16</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="Task_GiveReceipt" name="Выдать чек клиенту">
+      <bpmn:incoming>F16</bpmn:incoming>
+      <bpmn:outgoing>F17</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="Task_Complete" name="Статус ЭД &#39;выполнен и оплачен&#39;">
+      <bpmn:incoming>F17</bpmn:incoming>
+      <bpmn:incoming>F15_No</bpmn:incoming>
+      <bpmn:outgoing>F18</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="End_FreeDesk" name="Режим &#39;Свободная касса&#39;">
+      <bpmn:incoming>F18</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:task id="Task_ClientTakeGoods" name="Клиент забирает товары и сдачу">
+      <bpmn:incoming>F17</bpmn:incoming>
+      <bpmn:outgoing>F19</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="End_ClientHome" name="Клиент уходит домой">
+      <bpmn:incoming>F19</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="F1" sourceRef="Start_Need" targetRef="Task_GoToStore" />
+    <bpmn:sequenceFlow id="F2" sourceRef="Task_GoToStore" targetRef="Task_TakeBasket" />
+    <bpmn:sequenceFlow id="F3" sourceRef="Task_TakeBasket" targetRef="Task_PickGoods" />
+    <bpmn:sequenceFlow id="F4" sourceRef="Task_PickGoods" targetRef="Task_Queue" />
+    <bpmn:sequenceFlow id="F5" sourceRef="Task_Queue" targetRef="Task_PutOnBelt" />
+    <bpmn:sequenceFlow id="F6" sourceRef="Task_PutOnBelt" targetRef="Task_StartService" />
+    <bpmn:sequenceFlow id="F7" sourceRef="Task_StartService" targetRef="Task_CreateSaleED" />
+    <bpmn:sequenceFlow id="F8" sourceRef="Task_CreateSaleED" targetRef="GW_CreateSaleOK" />
+    <bpmn:sequenceFlow id="F8_FAIL" name="Да" sourceRef="GW_CreateSaleOK" targetRef="End_Fail" />
+    <bpmn:sequenceFlow id="F8_OK" name="Нет" sourceRef="GW_CreateSaleOK" targetRef="Trans_Scan" />
+    <bpmn:sequenceFlow id="F9" sourceRef="Trans_Scan" targetRef="Task_OfferPromos" />
+    <bpmn:sequenceFlow id="F10" sourceRef="Task_OfferPromos" targetRef="GW_PromoAgree" />
+    <bpmn:sequenceFlow id="F10_Yes" name="Да" sourceRef="GW_PromoAgree" targetRef="Trans_Promos" />
+    <bpmn:sequenceFlow id="F10_No" name="Нет" sourceRef="GW_PromoAgree" targetRef="Task_AnnounceAndAsk" />
+    <bpmn:sequenceFlow id="F11" sourceRef="Trans_Promos" targetRef="Task_AnnounceAndAsk" />
+    <bpmn:sequenceFlow id="F12" sourceRef="Task_AnnounceAndAsk" targetRef="GW_SelectPayments" />
+    <bpmn:sequenceFlow id="F12_Cash" name="Наличные" sourceRef="GW_SelectPayments" targetRef="Task_Cash" />
+    <bpmn:sequenceFlow id="F12_Card" name="Безнал" sourceRef="GW_SelectPayments" targetRef="Trans_CardPay" />
+    <bpmn:sequenceFlow id="F12_Gift" name="Подарочная карта" sourceRef="GW_SelectPayments" targetRef="Task_GiftCard" />
+    <bpmn:sequenceFlow id="F12_ToJoin" name="К проверке" sourceRef="GW_SelectPayments" targetRef="GW_PaymentsJoin" />
+    <bpmn:sequenceFlow id="F13_CashDone" sourceRef="Task_Cash" targetRef="GW_PaymentsJoin" />
+    <bpmn:sequenceFlow id="F13_GiftDone" sourceRef="Task_GiftCard" targetRef="GW_PaymentsJoin" />
+    <bpmn:sequenceFlow id="F13_CardDone" sourceRef="Trans_CardPay" targetRef="GW_PaymentsJoin" />
+    <bpmn:sequenceFlow id="F14" sourceRef="GW_PaymentsJoin" targetRef="GW_FullyPaid" />
+    <bpmn:sequenceFlow id="F14_Yes" name="Да" sourceRef="GW_FullyPaid" targetRef="GW_PrintReceipt" />
+    <bpmn:sequenceFlow id="F14_No" name="Нет" sourceRef="GW_FullyPaid" targetRef="GW_SelectPayments" />
+    <bpmn:sequenceFlow id="F15_Yes" name="Да" sourceRef="GW_PrintReceipt" targetRef="Task_Print" />
+    <bpmn:sequenceFlow id="F15_No" name="Нет" sourceRef="GW_PrintReceipt" targetRef="Task_Complete" />
+    <bpmn:sequenceFlow id="F16" sourceRef="Task_Print" targetRef="Task_GiveReceipt" />
+    <bpmn:sequenceFlow id="F17" sourceRef="Task_GiveReceipt" targetRef="Task_Complete" />
+    <bpmn:sequenceFlow id="F18" sourceRef="Task_Complete" targetRef="End_FreeDesk" />
+    <bpmn:sequenceFlow id="F19" sourceRef="Task_GiveReceipt" targetRef="Task_ClientTakeGoods" />
+    <bpmn:sequenceFlow id="F19_End" sourceRef="Task_ClientTakeGoods" targetRef="End_ClientHome" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Process_Lenta_Full">
+    <bpmndi:BPMNPlane id="BPMNPlane_Process_Lenta_Full" bpmnElement="Process_Lenta_Full">
+      <bpmndi:BPMNShape id="Start_Need_di" bpmnElement="Start_Need">
+        <dc:Bounds x="57" y="52" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_GoToStore_di" bpmnElement="Task_GoToStore">
+        <dc:Bounds x="175" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_TakeBasket_di" bpmnElement="Task_TakeBasket">
+        <dc:Bounds x="325" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_PickGoods_di" bpmnElement="Task_PickGoods">
+        <dc:Bounds x="475" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Queue_di" bpmnElement="Task_Queue">
+        <dc:Bounds x="625" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_PutOnBelt_di" bpmnElement="Task_PutOnBelt">
+        <dc:Bounds x="775" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_StartService_di" bpmnElement="Task_StartService">
+        <dc:Bounds x="925" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_CreateSaleED_di" bpmnElement="Task_CreateSaleED">
+        <dc:Bounds x="1075" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_CreateSaleOK_di" bpmnElement="GW_CreateSaleOK" isMarkerVisible="true">
+        <dc:Bounds x="1250" y="45" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Fail_di" bpmnElement="End_Fail">
+        <dc:Bounds x="1407" y="52" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Trans_Scan_di" bpmnElement="Trans_Scan">
+        <dc:Bounds x="1375" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_OfferPromos_di" bpmnElement="Task_OfferPromos">
+        <dc:Bounds x="1525" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_PromoAgree_di" bpmnElement="GW_PromoAgree" isMarkerVisible="true">
+        <dc:Bounds x="1700" y="185" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Trans_Promos_di" bpmnElement="Trans_Promos">
+        <dc:Bounds x="1825" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_AnnounceAndAsk_di" bpmnElement="Task_AnnounceAndAsk">
+        <dc:Bounds x="1975" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_SelectPayments_di" bpmnElement="GW_SelectPayments">
+        <dc:Bounds x="2150" y="185" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Cash_di" bpmnElement="Task_Cash">
+        <dc:Bounds x="2275" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_PaymentsJoin_di" bpmnElement="GW_PaymentsJoin">
+        <dc:Bounds x="2450" y="185" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_FullyPaid_di" bpmnElement="GW_FullyPaid" isMarkerVisible="true">
+        <dc:Bounds x="2600" y="185" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_PrintReceipt_di" bpmnElement="GW_PrintReceipt" isMarkerVisible="true">
+        <dc:Bounds x="2750" y="185" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Print_di" bpmnElement="Task_Print">
+        <dc:Bounds x="2875" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_GiveReceipt_di" bpmnElement="Task_GiveReceipt">
+        <dc:Bounds x="3025" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Complete_di" bpmnElement="Task_Complete">
+        <dc:Bounds x="3175" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_FreeDesk_di" bpmnElement="End_FreeDesk">
+        <dc:Bounds x="3357" y="192" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Trans_CardPay_di" bpmnElement="Trans_CardPay">
+        <dc:Bounds x="2275" y="310" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_GiftCard_di" bpmnElement="Task_GiftCard">
+        <dc:Bounds x="2275" y="450" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ClientTakeGoods_di" bpmnElement="Task_ClientTakeGoods">
+        <dc:Bounds x="25" y="730" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="F1_di" bpmnElement="F1">
+        <di:waypoint x="93" y="70" />
+        <di:waypoint x="175" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F2_di" bpmnElement="F2">
+        <di:waypoint x="275" y="70" />
+        <di:waypoint x="325" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F3_di" bpmnElement="F3">
+        <di:waypoint x="425" y="70" />
+        <di:waypoint x="475" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F4_di" bpmnElement="F4">
+        <di:waypoint x="575" y="70" />
+        <di:waypoint x="625" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F5_di" bpmnElement="F5">
+        <di:waypoint x="725" y="70" />
+        <di:waypoint x="775" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F6_di" bpmnElement="F6">
+        <di:waypoint x="875" y="70" />
+        <di:waypoint x="925" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F7_di" bpmnElement="F7">
+        <di:waypoint x="1025" y="70" />
+        <di:waypoint x="1075" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F8_di" bpmnElement="F8">
+        <di:waypoint x="1175" y="70" />
+        <di:waypoint x="1250" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F8_FAIL_di" bpmnElement="F8_FAIL">
+        <di:waypoint x="1300" y="70" />
+        <di:waypoint x="1407" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F8_OK_di" bpmnElement="F8_OK">
+        <di:waypoint x="1275" y="95" />
+        <di:waypoint x="1275" y="210" />
+        <di:waypoint x="1375" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F9_di" bpmnElement="F9">
+        <di:waypoint x="1475" y="210" />
+        <di:waypoint x="1525" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F10_di" bpmnElement="F10">
+        <di:waypoint x="1625" y="210" />
+        <di:waypoint x="1700" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F10_Yes_di" bpmnElement="F10_Yes">
+        <di:waypoint x="1750" y="210" />
+        <di:waypoint x="1825" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F10_No_di" bpmnElement="F10_No">
+        <di:waypoint x="1725" y="235" />
+        <di:waypoint x="1725" y="280" />
+        <di:waypoint x="2025" y="280" />
+        <di:waypoint x="2025" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F11_di" bpmnElement="F11">
+        <di:waypoint x="1925" y="210" />
+        <di:waypoint x="1975" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F12_di" bpmnElement="F12">
+        <di:waypoint x="2075" y="210" />
+        <di:waypoint x="2150" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F12_Cash_di" bpmnElement="F12_Cash">
+        <di:waypoint x="2200" y="210" />
+        <di:waypoint x="2275" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F12_Card_di" bpmnElement="F12_Card">
+        <di:waypoint x="2175" y="235" />
+        <di:waypoint x="2175" y="350" />
+        <di:waypoint x="2275" y="350" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F12_Gift_di" bpmnElement="F12_Gift">
+        <di:waypoint x="2175" y="235" />
+        <di:waypoint x="2175" y="490" />
+        <di:waypoint x="2275" y="490" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F12_ToJoin_di" bpmnElement="F12_ToJoin">
+        <di:waypoint x="2175" y="235" />
+        <di:waypoint x="2175" y="280" />
+        <di:waypoint x="2475" y="280" />
+        <di:waypoint x="2475" y="235" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F13_CashDone_di" bpmnElement="F13_CashDone">
+        <di:waypoint x="2375" y="210" />
+        <di:waypoint x="2450" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F14_di" bpmnElement="F14">
+        <di:waypoint x="2500" y="210" />
+        <di:waypoint x="2600" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F14_Yes_di" bpmnElement="F14_Yes">
+        <di:waypoint x="2650" y="210" />
+        <di:waypoint x="2750" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F14_No_di" bpmnElement="F14_No">
+        <di:waypoint x="2625" y="235" />
+        <di:waypoint x="2625" y="280" />
+        <di:waypoint x="2175" y="280" />
+        <di:waypoint x="2175" y="235" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F15_Yes_di" bpmnElement="F15_Yes">
+        <di:waypoint x="2800" y="210" />
+        <di:waypoint x="2875" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F15_No_di" bpmnElement="F15_No">
+        <di:waypoint x="2775" y="235" />
+        <di:waypoint x="2775" y="280" />
+        <di:waypoint x="3225" y="280" />
+        <di:waypoint x="3225" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F16_di" bpmnElement="F16">
+        <di:waypoint x="2975" y="210" />
+        <di:waypoint x="3025" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F17_di" bpmnElement="F17">
+        <di:waypoint x="3125" y="210" />
+        <di:waypoint x="3175" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F18_di" bpmnElement="F18">
+        <di:waypoint x="3275" y="210" />
+        <di:waypoint x="3357" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F13_CardDone_di" bpmnElement="F13_CardDone">
+        <di:waypoint x="2375" y="350" />
+        <di:waypoint x="2475" y="350" />
+        <di:waypoint x="2475" y="235" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F13_GiftDone_di" bpmnElement="F13_GiftDone">
+        <di:waypoint x="2375" y="490" />
+        <di:waypoint x="2475" y="490" />
+        <di:waypoint x="2475" y="235" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F19_di" bpmnElement="F19">
+        <di:waypoint x="125" y="770" />
+        <di:waypoint x="150" y="770" />
+        <di:waypoint x="150" y="700" />
+        <di:waypoint x="75" y="700" />
+        <di:waypoint x="75" y="730" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Trans_CardPay">
+    <bpmndi:BPMNPlane id="BPMNPlane_Trans_CardPay" bpmnElement="Trans_CardPay">
+      <bpmndi:BPMNShape id="TPay_Start_di" bpmnElement="TPay_Start">
+        <dc:Bounds x="57" y="52" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TPay_Form_di" bpmnElement="TPay_Form">
+        <dc:Bounds x="25" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TPay_Send_di" bpmnElement="TPay_Send">
+        <dc:Bounds x="57" y="332" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TPay_Wait_di" bpmnElement="TPay_Wait">
+        <dc:Bounds x="57" y="472" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TPay_Record_di" bpmnElement="TPay_Record">
+        <dc:Bounds x="25" y="590" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TPay_End_di" bpmnElement="TPay_End">
+        <dc:Bounds x="57" y="752" width="36" height="36" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Trans_Promos">
+    <bpmndi:BPMNPlane id="BPMNPlane_Trans_Promos" bpmnElement="Trans_Promos">
+      <bpmndi:BPMNShape id="TPromo_Start_di" bpmnElement="TPromo_Start">
+        <dc:Bounds x="57" y="52" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TPromo_Scan_di" bpmnElement="TPromo_Scan">
+        <dc:Bounds x="25" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TPromo_Record_di" bpmnElement="TPromo_Record">
+        <dc:Bounds x="25" y="310" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TPromo_End_di" bpmnElement="TPromo_End">
+        <dc:Bounds x="57" y="472" width="36" height="36" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Trans_Scan">
+    <bpmndi:BPMNPlane id="BPMNPlane_Trans_Scan" bpmnElement="Trans_Scan">
+      <bpmndi:BPMNShape id="TScan_Start_di" bpmnElement="TScan_Start">
+        <dc:Bounds x="57" y="52" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TScan_ScanItem_di" bpmnElement="TScan_ScanItem">
+        <dc:Bounds x="25" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TScan_Record_di" bpmnElement="TScan_Record">
+        <dc:Bounds x="25" y="310" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TScan_More_di" bpmnElement="TScan_More" isMarkerVisible="true">
+        <dc:Bounds x="50" y="465" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TScan_End_di" bpmnElement="TScan_End">
+        <dc:Bounds x="57" y="612" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="TScan_Yes_di" bpmnElement="TScan_Yes">
+        <di:waypoint x="100" y="490" />
+        <di:waypoint x="150" y="490" />
+        <di:waypoint x="150" y="280" />
+        <di:waypoint x="75" y="280" />
+        <di:waypoint x="75" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="TScan_No_di" bpmnElement="TScan_No">
+        <di:waypoint x="75" y="515" />
+        <di:waypoint x="75" y="612" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

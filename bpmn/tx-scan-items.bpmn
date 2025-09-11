@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Defs_TxScan" targetNamespace="http://example.com/bpmn/tx">
+  <bpmn:process id="Proc_TxScan" name="Пробитие товаров (транзакционно)" isExecutable="false">
+    <bpmn:startEvent id="S" name="Start"/>
+    <bpmn:transaction id="TxScan" name="Transaction: Scan Items">
+      <bpmn:startEvent id="TS" />
+      <bpmn:userTask id="Scan" name="Пробить товар" />
+      <bpmn:serviceTask id="FixInIS" name="Зафиксировать в ИС (короткая транзакция)" />
+      <bpmn:exclusiveGateway id="More?" name="Еще есть товары?" default="No" />
+      <bpmn:endEvent id="TE" />
+      <bpmn:sequenceFlow id="t1" sourceRef="TS" targetRef="Scan" />
+      <bpmn:sequenceFlow id="t2" sourceRef="Scan" targetRef="FixInIS" />
+      <bpmn:sequenceFlow id="t3" sourceRef="FixInIS" targetRef="More?" />
+      <bpmn:sequenceFlow id="Yes" name="Да" sourceRef="More?" targetRef="Scan" />
+      <bpmn:sequenceFlow id="No" name="Нет" sourceRef="More?" targetRef="TE" />
+    </bpmn:transaction>
+    <bpmn:endEvent id="E" name="End"/>
+    <bpmn:sequenceFlow id="f1" sourceRef="S" targetRef="TxScan" />
+    <bpmn:sequenceFlow id="f2" sourceRef="TxScan" targetRef="E" />
+  </bpmn:process>
+</bpmn:definitions>
+

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" id="Defs_TxCardPay" targetNamespace="http://example.com/bpmn/tx">
+  <bpmn:collaboration id="Collab" name="Payment Collaboration">
+    <bpmn:participant id="StoreIS" name="ИС магазина" processRef="Proc_TxCard" />
+    <bpmn:participant id="Bank" name="Банк-эквайер" processRef="Proc_Bank" />
+    <bpmn:messageFlow id="mf_req" name="Запрос оплаты" sourceRef="SendReq" targetRef="BankWait" />
+    <bpmn:messageFlow id="mf_res" name="Подтверждение" sourceRef="BankReply" targetRef="WaitAuth" />
+  </bpmn:collaboration>
+  <bpmn:process id="Proc_TxCard" name="Безналичная оплата (транзакция)" isExecutable="true">
+    <bpmn:startEvent id="S" name="Start" />
+    <bpmn:transaction id="TxCard" name="Transaction: Card Payment">
+      <bpmn:startEvent id="TS" />
+      <bpmn:serviceTask id="FormReq" name="Сформировать запрос" />
+      <bpmn:intermediateThrowEvent id="SendReq" name="Отправить запрос">
+        <bpmn:messageEventDefinition />
+      </bpmn:intermediateThrowEvent>
+      <bpmn:intermediateCatchEvent id="WaitAuth" name="Ожидать подтверждение">
+        <bpmn:messageEventDefinition />
+      </bpmn:intermediateCatchEvent>
+      <bpmn:serviceTask id="RecordResult" name="Зафиксировать результат" />
+      <bpmn:endEvent id="TE" />
+      <bpmn:sequenceFlow id="t1" sourceRef="TS" targetRef="FormReq" />
+      <bpmn:sequenceFlow id="t2" sourceRef="FormReq" targetRef="SendReq" />
+      <bpmn:sequenceFlow id="t3" sourceRef="SendReq" targetRef="WaitAuth" />
+      <bpmn:sequenceFlow id="t4" sourceRef="WaitAuth" targetRef="RecordResult" />
+      <bpmn:sequenceFlow id="t5" sourceRef="RecordResult" targetRef="TE" />
+    </bpmn:transaction>
+    <bpmn:endEvent id="E" name="End" />
+    <bpmn:sequenceFlow id="f1" sourceRef="S" targetRef="TxCard" />
+    <bpmn:sequenceFlow id="f2" sourceRef="TxCard" targetRef="E" />
+  </bpmn:process>
+  <bpmn:process id="Proc_Bank" name="Банк-эквайер" isExecutable="true">
+    <bpmn:startEvent id="BankStart" />
+    <bpmn:intermediateCatchEvent id="BankWait">
+      <bpmn:messageEventDefinition />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:serviceTask id="Auth" name="Проверка/авторизация" />
+    <bpmn:intermediateThrowEvent id="BankReply">
+      <bpmn:messageEventDefinition />
+    </bpmn:intermediateThrowEvent>
+    <bpmn:endEvent id="BankEnd" />
+    <bpmn:sequenceFlow id="b1" sourceRef="BankStart" targetRef="BankWait" />
+    <bpmn:sequenceFlow id="b2" sourceRef="BankWait" targetRef="Auth" />
+    <bpmn:sequenceFlow id="b3" sourceRef="Auth" targetRef="BankReply" />
+    <bpmn:sequenceFlow id="b4" sourceRef="BankReply" targetRef="BankEnd" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Proc_TxCard">
+    <bpmndi:BPMNPlane id="BPMNPlane_Proc_TxCard" bpmnElement="Proc_TxCard">
+      <bpmndi:BPMNShape id="S_di" bpmnElement="S">
+        <dc:Bounds x="57" y="52" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TxCard_di" bpmnElement="TxCard">
+        <dc:Bounds x="25" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="E_di" bpmnElement="E">
+        <dc:Bounds x="57" y="332" width="36" height="36" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_TxCard">
+    <bpmndi:BPMNPlane id="BPMNPlane_TxCard" bpmnElement="TxCard">
+      <bpmndi:BPMNShape id="TS_di" bpmnElement="TS">
+        <dc:Bounds x="57" y="52" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="FormReq_di" bpmnElement="FormReq">
+        <dc:Bounds x="25" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SendReq_di" bpmnElement="SendReq">
+        <dc:Bounds x="57" y="332" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="WaitAuth_di" bpmnElement="WaitAuth">
+        <dc:Bounds x="57" y="472" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="RecordResult_di" bpmnElement="RecordResult">
+        <dc:Bounds x="25" y="590" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TE_di" bpmnElement="TE">
+        <dc:Bounds x="57" y="752" width="36" height="36" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

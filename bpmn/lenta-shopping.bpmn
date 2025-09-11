@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_Lenta_Shopping_Full" targetNamespace="http://example.com/bpmn/lenta-shopping">
+
+  <bpmn:process id="Process_Lenta_Full" name="Полный процесс покупки в Ленте" isExecutable="true">
+
+    <!-- 01. Клиент осознал необходимость и пришел в магазин -->
+    <bpmn:startEvent id="Start_Need" name="Закончились продукты">
+      <bpmn:outgoing>F1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="Task_GoToStore" name="Отправиться в магазин">
+      <bpmn:incoming>F1</bpmn:incoming>
+      <bpmn:outgoing>F2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_TakeBasket" name="Взять корзинку">
+      <bpmn:incoming>F2</bpmn:incoming>
+      <bpmn:outgoing>F3</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_PickGoods" name="Подобрать товары по списку">
+      <bpmn:incoming>F3</bpmn:incoming>
+      <bpmn:outgoing>F4</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_Queue" name="Подойти к кассе и ждать очереди">
+      <bpmn:incoming>F4</bpmn:incoming>
+      <bpmn:outgoing>F5</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_PutOnBelt" name="Выложить товары на ленту">
+      <bpmn:incoming>F5</bpmn:incoming>
+      <bpmn:outgoing>F6</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- 02. Обслуживание кассиром: создание продажи и пробитие товаров транзакционно -->
+    <bpmn:task id="Task_StartService" name="Кассир начинает обслуживание">
+      <bpmn:incoming>F6</bpmn:incoming>
+      <bpmn:outgoing>F7</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_CreateSaleED" name="Создать ЭД 'продажа' в ИС">
+      <bpmn:incoming>F7</bpmn:incoming>
+      <bpmn:outgoing>F8</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="GW_CreateSaleOK" name="Ошибка при создании?" default="F8_OK">
+      <bpmn:incoming>F8</bpmn:incoming>
+      <bpmn:outgoing>F8_FAIL</bpmn:outgoing>
+      <bpmn:outgoing>F8_OK</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="End_Fail" name="Прервать обслуживание">
+      <bpmn:incoming>F8_FAIL</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:transaction id="Trans_Scan" name="Пробитие товаров (транзакционно)">
+      <bpmn:incoming>F8_OK</bpmn:incoming>
+      <bpmn:outgoing>F9</bpmn:outgoing>
+      <bpmn:startEvent id="TScan_Start" />
+      <bpmn:userTask id="TScan_ScanItem" name="Сканировать товар" />
+      <bpmn:serviceTask id="TScan_Record" name="Зафиксировать в ИС (короткая транзакция)" />
+      <bpmn:exclusiveGateway id="TScan_More" name="Еще есть товары?" default="TScan_No">
+        <bpmn:outgoing>TScan_Yes</bpmn:outgoing>
+        <bpmn:outgoing>TScan_No</bpmn:outgoing>
+      </bpmn:exclusiveGateway>
+      <bpmn:endEvent id="TScan_End" />
+      <bpmn:sequenceFlow id="TSF1" sourceRef="TScan_Start" targetRef="TScan_ScanItem" />
+      <bpmn:sequenceFlow id="TSF2" sourceRef="TScan_ScanItem" targetRef="TScan_Record" />
+      <bpmn:sequenceFlow id="TSF3" sourceRef="TScan_Record" targetRef="TScan_More" />
+      <bpmn:sequenceFlow id="TScan_Yes" name="Да" sourceRef="TScan_More" targetRef="TScan_ScanItem" />
+      <bpmn:sequenceFlow id="TScan_No" name="Нет" sourceRef="TScan_More" targetRef="TScan_End" />
+    </bpmn:transaction>
+
+    <bpmn:userTask id="Task_OfferPromos" name="Предложить акции и пакет">
+      <bpmn:incoming>F9</bpmn:incoming>
+      <bpmn:outgoing>F10</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="GW_PromoAgree" name="Клиент согласен?" default="F10_No">
+      <bpmn:incoming>F10</bpmn:incoming>
+      <bpmn:outgoing>F10_Yes</bpmn:outgoing>
+      <bpmn:outgoing>F10_No</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:transaction id="Trans_Promos" name="Добавить акции/пакет (транзакционно)">
+      <bpmn:incoming>F10_Yes</bpmn:incoming>
+      <bpmn:outgoing>F11</bpmn:outgoing>
+      <bpmn:startEvent id="TPromo_Start" />
+      <bpmn:userTask id="TPromo_Scan" name="Сканировать акции/пакет" />
+      <bpmn:serviceTask id="TPromo_Record" name="Зафиксировать в ИС (короткая транзакция)" />
+      <bpmn:endEvent id="TPromo_End" />
+      <bpmn:sequenceFlow id="TPS1" sourceRef="TPromo_Start" targetRef="TPromo_Scan" />
+      <bpmn:sequenceFlow id="TPS2" sourceRef="TPromo_Scan" targetRef="TPromo_Record" />
+      <bpmn:sequenceFlow id="TPS3" sourceRef="TPromo_Record" targetRef="TPromo_End" />
+    </bpmn:transaction>
+
+    <!-- 03. Оплата: допускаем несколько способов (инклюзивный шлюз) -->
+    <bpmn:userTask id="Task_AnnounceAndAsk" name="Озвучить сумму и спросить способ оплаты">
+      <bpmn:incoming>F10_No</bpmn:incoming>
+      <bpmn:incoming>F11</bpmn:incoming>
+      <bpmn:outgoing>F12</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:inclusiveGateway id="GW_SelectPayments" name="Выбор способов оплаты (возможна комбинация)" default="F12_ToJoin">
+      <bpmn:incoming>F12</bpmn:incoming>
+      <bpmn:outgoing>F12_Cash</bpmn:outgoing>
+      <bpmn:outgoing>F12_Card</bpmn:outgoing>
+      <bpmn:outgoing>F12_Gift</bpmn:outgoing>
+      <bpmn:outgoing>F12_ToJoin</bpmn:outgoing>
+    </bpmn:inclusiveGateway>
+
+    <bpmn:userTask id="Task_Cash" name="Принять наличные, выдать сдачу при необходимости">
+      <bpmn:incoming>F12_Cash</bpmn:incoming>
+      <bpmn:outgoing>F13_CashDone</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:userTask id="Task_GiftCard" name="Принять подарочную карту">
+      <bpmn:incoming>F12_Gift</bpmn:incoming>
+      <bpmn:outgoing>F13_GiftDone</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:transaction id="Trans_CardPay" name="Безналичная оплата (транзакция)">
+      <bpmn:incoming>F12_Card</bpmn:incoming>
+      <bpmn:outgoing>F13_CardDone</bpmn:outgoing>
+      <bpmn:startEvent id="TPay_Start" />
+      <bpmn:serviceTask id="TPay_Form" name="Сформировать запрос на оплату" />
+      <bpmn:intermediateThrowEvent id="TPay_Send" name="Отправить запрос" />
+      <bpmn:intermediateCatchEvent id="TPay_Wait" name="Ожидать подтверждение" />
+      <bpmn:serviceTask id="TPay_Record" name="Зафиксировать результат оплаты" />
+      <bpmn:endEvent id="TPay_End" />
+      <bpmn:sequenceFlow id="TPF1" sourceRef="TPay_Start" targetRef="TPay_Form" />
+      <bpmn:sequenceFlow id="TPF2" sourceRef="TPay_Form" targetRef="TPay_Send" />
+      <bpmn:sequenceFlow id="TPF3" sourceRef="TPay_Send" targetRef="TPay_Wait" />
+      <bpmn:sequenceFlow id="TPF4" sourceRef="TPay_Wait" targetRef="TPay_Record" />
+      <bpmn:sequenceFlow id="TPF5" sourceRef="TPay_Record" targetRef="TPay_End" />
+    </bpmn:transaction>
+
+    <bpmn:inclusiveGateway id="GW_PaymentsJoin" name="Синхронизация выбранных оплат">
+      <bpmn:incoming>F13_CashDone</bpmn:incoming>
+      <bpmn:incoming>F13_GiftDone</bpmn:incoming>
+      <bpmn:incoming>F13_CardDone</bpmn:incoming>
+      <bpmn:incoming>F12_ToJoin</bpmn:incoming>
+      <bpmn:outgoing>F14</bpmn:outgoing>
+    </bpmn:inclusiveGateway>
+    <bpmn:exclusiveGateway id="GW_FullyPaid" name="Полностью оплачено?" default="F14_No">
+      <bpmn:incoming>F14</bpmn:incoming>
+      <bpmn:outgoing>F14_Yes</bpmn:outgoing>
+      <bpmn:outgoing>F14_No</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+
+    <!-- Чек: решение + печать + вручение -->
+    <bpmn:exclusiveGateway id="GW_PrintReceipt" name="Печатать чек?" default="F15_No">
+      <bpmn:incoming>F14_Yes</bpmn:incoming>
+      <bpmn:outgoing>F15_Yes</bpmn:outgoing>
+      <bpmn:outgoing>F15_No</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="Task_Print" name="Напечатать чек">
+      <bpmn:incoming>F15_Yes</bpmn:incoming>
+      <bpmn:outgoing>F16</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="Task_GiveReceipt" name="Выдать чек клиенту">
+      <bpmn:incoming>F16</bpmn:incoming>
+      <bpmn:outgoing>F17</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="Task_Complete" name="Статус ЭД 'выполнен и оплачен'">
+      <bpmn:incoming>F17</bpmn:incoming>
+      <bpmn:incoming>F15_No</bpmn:incoming>
+      <bpmn:outgoing>F18</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="End_FreeDesk" name="Режим 'Свободная касса'">
+      <bpmn:incoming>F18</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- Завершение для клиента -->
+    <bpmn:task id="Task_ClientTakeGoods" name="Клиент забирает товары и сдачу">
+      <bpmn:incoming>F17</bpmn:incoming>
+      <bpmn:outgoing>F19</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="End_ClientHome" name="Клиент уходит домой">
+      <bpmn:incoming>F19</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <!-- Основные потоки -->
+    <bpmn:sequenceFlow id="F1" sourceRef="Start_Need" targetRef="Task_GoToStore" />
+    <bpmn:sequenceFlow id="F2" sourceRef="Task_GoToStore" targetRef="Task_TakeBasket" />
+    <bpmn:sequenceFlow id="F3" sourceRef="Task_TakeBasket" targetRef="Task_PickGoods" />
+    <bpmn:sequenceFlow id="F4" sourceRef="Task_PickGoods" targetRef="Task_Queue" />
+    <bpmn:sequenceFlow id="F5" sourceRef="Task_Queue" targetRef="Task_PutOnBelt" />
+    <bpmn:sequenceFlow id="F6" sourceRef="Task_PutOnBelt" targetRef="Task_StartService" />
+    <bpmn:sequenceFlow id="F7" sourceRef="Task_StartService" targetRef="Task_CreateSaleED" />
+    <bpmn:sequenceFlow id="F8" sourceRef="Task_CreateSaleED" targetRef="GW_CreateSaleOK" />
+    <bpmn:sequenceFlow id="F8_FAIL" name="Да" sourceRef="GW_CreateSaleOK" targetRef="End_Fail" />
+    <bpmn:sequenceFlow id="F8_OK" name="Нет" sourceRef="GW_CreateSaleOK" targetRef="Trans_Scan" />
+    <bpmn:sequenceFlow id="F9" sourceRef="Trans_Scan" targetRef="Task_OfferPromos" />
+    <bpmn:sequenceFlow id="F10" sourceRef="Task_OfferPromos" targetRef="GW_PromoAgree" />
+    <bpmn:sequenceFlow id="F10_Yes" name="Да" sourceRef="GW_PromoAgree" targetRef="Trans_Promos" />
+    <bpmn:sequenceFlow id="F10_No" name="Нет" sourceRef="GW_PromoAgree" targetRef="Task_AnnounceAndAsk" />
+    <bpmn:sequenceFlow id="F11" sourceRef="Trans_Promos" targetRef="Task_AnnounceAndAsk" />
+    <bpmn:sequenceFlow id="F12" sourceRef="Task_AnnounceAndAsk" targetRef="GW_SelectPayments" />
+    <bpmn:sequenceFlow id="F12_Cash" name="Наличные" sourceRef="GW_SelectPayments" targetRef="Task_Cash" />
+    <bpmn:sequenceFlow id="F12_Card" name="Безнал" sourceRef="GW_SelectPayments" targetRef="Trans_CardPay" />
+    <bpmn:sequenceFlow id="F12_Gift" name="Подарочная карта" sourceRef="GW_SelectPayments" targetRef="Task_GiftCard" />
+    <bpmn:sequenceFlow id="F12_ToJoin" name="К проверке" sourceRef="GW_SelectPayments" targetRef="GW_PaymentsJoin" />
+    <bpmn:sequenceFlow id="F13_CashDone" sourceRef="Task_Cash" targetRef="GW_PaymentsJoin" />
+    <bpmn:sequenceFlow id="F13_GiftDone" sourceRef="Task_GiftCard" targetRef="GW_PaymentsJoin" />
+    <bpmn:sequenceFlow id="F13_CardDone" sourceRef="Trans_CardPay" targetRef="GW_PaymentsJoin" />
+    <bpmn:sequenceFlow id="F14" sourceRef="GW_PaymentsJoin" targetRef="GW_FullyPaid" />
+    <bpmn:sequenceFlow id="F14_Yes" name="Да" sourceRef="GW_FullyPaid" targetRef="GW_PrintReceipt" />
+    <bpmn:sequenceFlow id="F14_No" name="Нет" sourceRef="GW_FullyPaid" targetRef="GW_SelectPayments" />
+    <bpmn:sequenceFlow id="F15_Yes" name="Да" sourceRef="GW_PrintReceipt" targetRef="Task_Print" />
+    <bpmn:sequenceFlow id="F15_No" name="Нет" sourceRef="GW_PrintReceipt" targetRef="Task_Complete" />
+    <bpmn:sequenceFlow id="F16" sourceRef="Task_Print" targetRef="Task_GiveReceipt" />
+    <bpmn:sequenceFlow id="F17" sourceRef="Task_GiveReceipt" targetRef="Task_Complete" />
+    <bpmn:sequenceFlow id="F18" sourceRef="Task_Complete" targetRef="End_FreeDesk" />
+    <bpmn:sequenceFlow id="F19" sourceRef="Task_GiveReceipt" targetRef="Task_ClientTakeGoods" />
+    <bpmn:sequenceFlow id="F19_End" sourceRef="Task_ClientTakeGoods" targetRef="End_ClientHome" />
+
+  </bpmn:process>
+
+</bpmn:definitions>
+

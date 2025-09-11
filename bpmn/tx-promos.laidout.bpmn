@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" id="Defs_TxPromos" targetNamespace="http://example.com/bpmn/tx">
+  <bpmn:process id="Proc_TxPromos" name="Добавить акции/пакет (транзакционно)" isExecutable="false">
+    <bpmn:startEvent id="S" name="Start" />
+    <bpmn:transaction id="TxPromos" name="Transaction: Add Promotions">
+      <bpmn:startEvent id="TS" />
+      <bpmn:userTask id="ScanPromo" name="Сканировать акцию/пакет" />
+      <bpmn:serviceTask id="FixPromo" name="Зафиксировать в ИС" />
+      <bpmn:endEvent id="TE" />
+      <bpmn:sequenceFlow id="t1" sourceRef="TS" targetRef="ScanPromo" />
+      <bpmn:sequenceFlow id="t2" sourceRef="ScanPromo" targetRef="FixPromo" />
+      <bpmn:sequenceFlow id="t3" sourceRef="FixPromo" targetRef="TE" />
+    </bpmn:transaction>
+    <bpmn:endEvent id="E" name="End" />
+    <bpmn:sequenceFlow id="f1" sourceRef="S" targetRef="TxPromos" />
+    <bpmn:sequenceFlow id="f2" sourceRef="TxPromos" targetRef="E" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Proc_TxPromos">
+    <bpmndi:BPMNPlane id="BPMNPlane_Proc_TxPromos" bpmnElement="Proc_TxPromos">
+      <bpmndi:BPMNShape id="S_di" bpmnElement="S">
+        <dc:Bounds x="57" y="52" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TxPromos_di" bpmnElement="TxPromos">
+        <dc:Bounds x="25" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="E_di" bpmnElement="E">
+        <dc:Bounds x="57" y="332" width="36" height="36" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_TxPromos">
+    <bpmndi:BPMNPlane id="BPMNPlane_TxPromos" bpmnElement="TxPromos">
+      <bpmndi:BPMNShape id="TS_di" bpmnElement="TS">
+        <dc:Bounds x="57" y="52" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ScanPromo_di" bpmnElement="ScanPromo">
+        <dc:Bounds x="25" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="FixPromo_di" bpmnElement="FixPromo">
+        <dc:Bounds x="25" y="310" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TE_di" bpmnElement="TE">
+        <dc:Bounds x="57" y="472" width="36" height="36" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
