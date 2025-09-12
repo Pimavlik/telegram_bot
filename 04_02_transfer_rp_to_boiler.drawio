@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2025-09-12T12:00:00.000Z" agent="AI-Assistant" version="24.7.8" editor="draw.io" type="device">
+  <diagram id="D1" name="04.02 Передача НП">
+    <mxGraphModel dx="1920" dy="1080" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2400" pageHeight="1600" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Декоративная рамка -->
+        <mxCell id="border" value="" style="rounded=0;whiteSpace=wrap;html=1;strokeWidth=1;dashed=1;dashPattern=4 4;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="15" y="40" width="2360" height="1520" as="geometry"/>
+        </mxCell>
+
+        <!-- Заголовок процесса -->
+        <mxCell id="header" value="04.02 Передача НП из резервуарного парка в котельную" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;fontStyle=1;fontSize=16;" vertex="1" parent="1">
+          <mxGeometry x="550" y="10" width="1300" height="24" as="geometry"/>
+        </mxCell>
+
+        <!-- Дорожки (swimlanes) -->
+        <mxCell id="lane1" value="Сотрудник котельной (АСУ ТП)" style="swimlane;html=1;whiteSpace=wrap;horizontal=0;startSize=230;rounded=0;swimlaneFillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="40" y="80" width="2200" height="220" as="geometry"/>
+        </mxCell>
+        <mxCell id="lane2" value="Начальник смены" style="swimlane;html=1;whiteSpace=wrap;horizontal=0;startSize=230;rounded=0;swimlaneFillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="40" y="300" width="2200" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="lane3" value="Оператор ДСП" style="swimlane;html=1;whiteSpace=wrap;horizontal=0;startSize=230;rounded=0;swimlaneFillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="40" y="480" width="2200" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="lane4" value="Старший грузовой диспетчер" style="swimlane;html=1;whiteSpace=wrap;horizontal=0;startSize=230;rounded=0;swimlaneFillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="40" y="660" width="2200" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="lane5" value="Система" style="swimlane;html=1;whiteSpace=wrap;horizontal=0;startSize=230;rounded=0;swimlaneFillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="40" y="840" width="2200" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="lane6" value="Внешний контур / Оборудование" style="swimlane;html=1;whiteSpace=wrap;horizontal=0;startSize=230;rounded=0;swimlaneFillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="40" y="1020" width="2200" height="200" as="geometry"/>
+        </mxCell>
+
+        <!-- Нижние объекты -->
+        <mxCell id="asu_tp" value="АСУ ТП" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="640" y="1270" width="600" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="rezerv" value="Резервуарный парк" style="rounded=1;whiteSpace=wrap;html=1;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry x="640" y="1390" width="1240" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- Lane 1: Start, 04.02.01, 04.02.10, 04.02.11, End -->
+        <mxCell id="start_evt" value="" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="lane1">
+          <mxGeometry x="260" y="120" width="36" height="36" as="geometry"/>
+        </mxCell>
+        <mxCell id="start_lbl" value="Потребность в передаче НП из резервуарного парка в котельную" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;" vertex="1" parent="lane1">
+          <mxGeometry x="304" y="118" width="520" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="t040201" value="04.02.01 Формирование запроса на передачу НП в котельную" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="lane1">
+          <mxGeometry x="360" y="70" width="380" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="t040210" value="04.02.10 Учет Акта приема-передачи" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="lane1">
+          <mxGeometry x="1620" y="70" width="300" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="t040211" value="04.02.11 Закрытие запроса на передачу НП в котельную" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="lane1">
+          <mxGeometry x="1920" y="70" width="300" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="end_evt" value="" style="ellipse;whiteSpace=wrap;html=1;" vertex="1" parent="lane1">
+          <mxGeometry x="2130" y="120" width="36" height="36" as="geometry"/>
+        </mxCell>
+        <mxCell id="end_lbl" value="Документальное завершение передачи НП из резервуарного парка в котельную" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;" vertex="1" parent="lane1">
+          <mxGeometry x="1770" y="120" width="340" height="44" as="geometry"/>
+        </mxCell>
+
+        <!-- Lane 2: 04.02.02, 04.02.05 -->
+        <mxCell id="t040202" value="04.02.02 Согласование и команда на перемещение НП" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="lane2">
+          <mxGeometry x="720" y="50" width="360" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="t040205" value="04.02.05 Фиксация факта перемещения НП" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="lane2">
+          <mxGeometry x="1320" y="50" width="360" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- Lane 3: 04.02.03, 04.02.04 -->
+        <mxCell id="t040203" value="04.02.03 ТО перемещения" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="lane3">
+          <mxGeometry x="1020" y="50" width="300" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="t040204" value="04.02.04 Сообщение о завершении ТО перемещения НП" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="lane3">
+          <mxGeometry x="1320" y="50" width="360" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- Lane 4: 04.02.09 -->
+        <mxCell id="t040209" value="04.02.09 Оформление Акта приема-передачи" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="lane4">
+          <mxGeometry x="1620" y="50" width="360" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- Lane 5: Система (API) -->
+        <mxCell id="api_send_1" value="Передача по API" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="lane5">
+          <mxGeometry x="720" y="50" width="220" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="api_recv_1" value="Получение по API" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="lane5">
+          <mxGeometry x="1020" y="50" width="220" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="api_send_2" value="Передача по API" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="lane5">
+          <mxGeometry x="1320" y="50" width="220" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="api_recv_2" value="Получение по API" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="lane5">
+          <mxGeometry x="1620" y="50" width="220" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- Lane 6: Внешний контур / Оборудование -->
+        <mxCell id="t040206" value="04.02.06 Получение сообщения о факте перемещения НП" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="lane6">
+          <mxGeometry x="1020" y="60" width="420" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="t040207" value="04.02.07 Проверка уровня в резервуаре" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="lane6">
+          <mxGeometry x="1320" y="60" width="360" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="t040208" value="04.02.08 Фиксация уровня в резервуаре" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="lane6">
+          <mxGeometry x="1620" y="60" width="360" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="scan_note" value="Подгрузка скана отчета / акта" style="rounded=1;whiteSpace=wrap;html=1;strokeDashpattern=1 1;" vertex="1" parent="lane6">
+          <mxGeometry x="1990" y="72" width="190" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- Соединители (basic flow) -->
+        <mxCell id="e01" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="start_evt" target="t040201">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e02" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="t040201" target="api_send_1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e03" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="api_send_1" target="api_recv_1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e04" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="api_recv_1" target="t040202">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e05" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="t040202" target="t040203">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e06" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="t040203" target="api_send_2">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e07" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="api_send_2" target="api_recv_2">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e08" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="api_recv_2" target="t040204">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e09" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="t040204" target="t040205">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Вертикальные связи к оборудованию -->
+        <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="t040205" target="t040206">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="t040206" target="t040207">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="t040207" target="t040208">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="t040208" target="t040209">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Завершение -->
+        <mxCell id="e14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="t040209" target="t040210">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="t040210" target="t040211">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="t040211" target="end_evt">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Пунктирные связи к нижним блокам -->
+        <mxCell id="e17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="api_send_1" target="asu_tp">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="api_send_2" target="asu_tp">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e19" style="edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="t040206" target="rezerv">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="t040207" target="rezerv">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e21" style="edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="t040208" target="rezerv">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <!-- Пропорции и расстояния подобраны по изображению; масштабируйте страницу при необходимости. -->
+</mxfile>
+
