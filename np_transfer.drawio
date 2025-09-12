@@ -1,0 +1,195 @@
+<mxfile host="app.diagrams.net" agent="GPT-5" version="24.7.12" type="device">
+  <diagram id="diagram-1" name="Page-1">
+    <mxGraphModel dx="1600" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1920" pageHeight="1080" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Title -->
+        <mxCell id="title" value="04.02 Передача НП из резервуарного парка в котельную" style="text;html=1;whiteSpace=wrap;align=center;fontSize=16;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="40" y="30" width="1840" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- Swimlanes -->
+        <mxCell id="lane1" value="Сотрудник котельной" style="swimlane;horizontal=1;startSize=28;rounded=0;strokeColor=#000000;fontSize=12;fillColor=#ffffff" vertex="1" parent="1">
+          <mxGeometry x="40" y="90" width="1840" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="lane2" value="Начальник смены" style="swimlane;horizontal=1;startSize=28;rounded=0;strokeColor=#000000;fontSize=12;fillColor=#ffffff" vertex="1" parent="1">
+          <mxGeometry x="40" y="210" width="1840" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="lane3" value="Диспетчер АСУ ТПП" style="swimlane;horizontal=1;startSize=28;rounded=0;strokeColor=#000000;fontSize=12;fillColor=#ffffff" vertex="1" parent="1">
+          <mxGeometry x="40" y="330" width="1840" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="lane4" value="Старший грузовой диспетчер" style="swimlane;horizontal=1;startSize=28;rounded=0;strokeColor=#000000;fontSize=12;fillColor=#ffffff" vertex="1" parent="1">
+          <mxGeometry x="40" y="450" width="1840" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="lane5" value="Система" style="swimlane;horizontal=1;startSize=28;rounded=0;strokeColor=#000000;fontSize=12;fillColor=#f5f5f5" vertex="1" parent="1">
+          <mxGeometry x="40" y="570" width="1840" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="lane6" value="Внешний контур (АСУ ТП / Охрана)" style="swimlane;horizontal=1;startSize=28;rounded=0;strokeColor=#000000;fontSize=12;fillColor=#ffffff" vertex="1" parent="1">
+          <mxGeometry x="40" y="690" width="1840" height="180" as="geometry"/>
+        </mxCell>
+
+        <!-- Start / End events -->
+        <mxCell id="start1" value="" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;strokeColor=#000000;fillColor=#ffffff" vertex="1" parent="lane1">
+          <mxGeometry x="40" y="45" width="30" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="end1" value="" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;strokeColor=#000000;fillColor=#ffffff;strokeWidth=2" vertex="1" parent="lane1">
+          <mxGeometry x="1760" y="45" width="30" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- Steps in lanes -->
+        <mxCell id="s01" value="04.02.01\nФормирование запроса на передачу НП в котельную" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#dae8fc" vertex="1" parent="lane1">
+          <mxGeometry x="90" y="25" width="320" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="s11" value="04.02.11\nЗакрытие запроса на передачу НП в котельную" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#dae8fc" vertex="1" parent="lane1">
+          <mxGeometry x="1410" y="25" width="330" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="s02" value="04.02.02\nСогласование и команда на перемещение НП" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#ffe6cc" vertex="1" parent="lane2">
+          <mxGeometry x="470" y="25" width="330" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="s03" value="04.02.03\nТО перемещения" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#d5e8d4" vertex="1" parent="lane3">
+          <mxGeometry x="850" y="25" width="200" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="s04" value="04.02.04\nСообщение о завершении ТО перемещения НП" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#d5e8d4" vertex="1" parent="lane3">
+          <mxGeometry x="1070" y="25" width="330" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="s05" value="04.02.05\nФиксация факта перемещения НП" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#fff2cc" vertex="1" parent="lane4">
+          <mxGeometry x="1410" y="25" width="300" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- System API messages -->
+        <mxCell id="api1s" value="Передача по API" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#f8cecc" vertex="1" parent="lane5">
+          <mxGeometry x="260" y="25" width="180" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="api1r" value="Получение по API" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#f8cecc" vertex="1" parent="lane5">
+          <mxGeometry x="460" y="25" width="180" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="api2s" value="Передача по API" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#f8cecc" vertex="1" parent="lane5">
+          <mxGeometry x="990" y="25" width="180" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="api2r" value="Получение по API" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#f8cecc" vertex="1" parent="lane5">
+          <mxGeometry x="1190" y="25" width="180" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="api3s" value="Передача по API" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#f8cecc" vertex="1" parent="lane5">
+          <mxGeometry x="1500" y="25" width="180" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="api3r" value="Получение по API" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#f8cecc" vertex="1" parent="lane5">
+          <mxGeometry x="1700" y="25" width="120" height="50" as="geometry"/>
+        </mxCell>
+
+        <!-- External contour steps -->
+        <mxCell id="s06" value="04.02.06\nПолучение сообщения о факте перемещения НП" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#e1d5e7" vertex="1" parent="lane6">
+          <mxGeometry x="141" y="25" width="360" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="s07" value="04.02.07\nПроверка уровня в резервуаре" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#e1d5e7" vertex="1" parent="lane6">
+          <mxGeometry x="520" y="25" width="300" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="s08" value="04.02.08\nФиксация уровня в резервуаре\n(Подгрузка скана отчёта/акта)" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#e1d5e7" vertex="1" parent="lane6">
+          <mxGeometry x="840" y="25" width="360" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="s09" value="04.02.09\nОформление Акта приема‑передачи" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#d5e8d4" vertex="1" parent="lane3">
+          <mxGeometry x="1410" y="25" width="300" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="s10" value="04.02.10\nУчет Акта приема‑передачи" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#d5e8d4" vertex="1" parent="lane3">
+          <mxGeometry x="1730" y="25" width="230" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- Edges -->
+        <mxCell id="e_start_s01" edge="1" parent="lane1" source="start1" target="s01" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_s01_api1s" edge="1" parent="1" source="s01" target="api1s" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_api1r_s02" edge="1" parent="1" source="api1r" target="s02" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_s02_s03" edge="1" parent="1" source="s02" target="s03" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_s03_s04" edge="1" parent="1" source="s03" target="s04" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_s04_api2s" edge="1" parent="1" source="s04" target="api2s" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_api2r_s05" edge="1" parent="1" source="api2r" target="s05" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e_s05_api3s" edge="1" parent="1" source="s05" target="api3s" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_api3r_s06" edge="1" parent="1" source="api3r" target="s06" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_s06_s07" edge="1" parent="1" source="s06" target="s07" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_s07_s08" edge="1" parent="1" source="s07" target="s08" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_s08_s09" edge="1" parent="1" source="s08" target="s09" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_s09_s10" edge="1" parent="1" source="s09" target="s10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_s10_s11" edge="1" parent="1" source="s10" target="s11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_s10_end" edge="1" parent="1" source="s10" target="s11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;opacity=0">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Connect back to closing step -->
+        <mxCell id="e_s10_to_close" edge="1" parent="1" source="s10" target="s11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;opacity=0"/>
+
+        <!-- Link to closing action in lane1 -->
+        <mxCell id="s11" value="04.02.11 Закрытие запроса" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#dae8fc" vertex="1" parent="lane1">
+          <mxGeometry x="1060" y="25" width="300" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_s10_close" edge="1" parent="1" source="s10" target="s11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_close_end" edge="1" parent="1" source="s11" target="end1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="legend" name="Legend">
+    <mxGraphModel dx="800" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="l1" value="Синие — действия котельной" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="300" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="l2" value="Оранжевые — действия начальника смены" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc" vertex="1" parent="1">
+          <mxGeometry x="40" y="100" width="300" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="l3" value="Зелёные — действия диспетчера" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4" vertex="1" parent="1">
+          <mxGeometry x="40" y="160" width="300" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="l4" value="Жёлтые — фиксация фактов" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc" vertex="1" parent="1">
+          <mxGeometry x="40" y="220" width="300" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="l5" value="Розовые — обмен по API" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc" vertex="1" parent="1">
+          <mxGeometry x="40" y="280" width="300" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="l6" value="Фиолетовые — внешний контур" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7" vertex="1" parent="1">
+          <mxGeometry x="40" y="340" width="300" height="50" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
+
