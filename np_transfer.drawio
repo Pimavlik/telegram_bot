@@ -101,7 +101,7 @@
         </mxCell>
 
         <!-- Edges -->
-        <mxCell id="e_start_s01" edge="1" parent="lane1" source="start1" target="s01" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1">
+        <mxCell id="e_start_s01" edge="1" parent="1" source="start1" target="s01" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
         <mxCell id="e_s01_api1s" edge="1" parent="1" source="s01" target="api1s" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1">
@@ -141,24 +141,12 @@
         <mxCell id="e_s09_s10" edge="1" parent="1" source="s09" target="s10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="e_s10_s11" edge="1" parent="1" source="s10" target="s11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none">
-          <mxGeometry relative="1" as="geometry"/>
-        </mxCell>
-        <mxCell id="e_s10_end" edge="1" parent="1" source="s10" target="s11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;opacity=0">
+        <mxCell id="e_s10_s11" edge="1" parent="1" source="s10" target="s11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
 
-        <!-- Connect back to closing step -->
-        <mxCell id="e_s10_to_close" edge="1" parent="1" source="s10" target="s11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;opacity=0"/>
-
-        <!-- Link to closing action in lane1 -->
-        <mxCell id="s11b" value="04.02.11 Закрытие запроса" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#000000;fillColor=#dae8fc" vertex="1" parent="lane1">
-          <mxGeometry x="1060" y="25" width="300" height="70" as="geometry"/>
-        </mxCell>
-        <mxCell id="e_s10_close" edge="1" parent="1" source="s10" target="s11b" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1">
-          <mxGeometry relative="1" as="geometry"/>
-        </mxCell>
-        <mxCell id="e_close_end" edge="1" parent="1" source="s11b" target="end1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1">
+        <!-- Connect back to closing step (direct) -->
+        <mxCell id="e_close_end" edge="1" parent="1" source="s11" target="end1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
 
